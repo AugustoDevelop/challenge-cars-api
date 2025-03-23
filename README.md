@@ -15,8 +15,8 @@ API RESTful para gerenciamento de usuários e carros, com autenticação JWT, de
 
 ## Estórias de Usuário
 
-1. **US01: Integração com SonarQube para Análise de Código** Como desenvolvedor, quero integração com SonarQube para garantir a qualidade do código e identificar vulnerabilidades potencial.
-2. **US02: Integração com JFrog Artifactory para Gerenciamento de Artefatos** Como arquiteto de software, preciso de um repositório de artefatos para gerenciar dependências e builds do projeto.
+1. **US01: Integração com SonarQube para Análise de Código** Como desenvolvedor, quero integração com SonarQube para garantir a qualidade do código e identificar vulnerabilidades potencial. (✅)
+2. **US02: Integração com JFrog Artifactory para Gerenciamento de Artefatos** Como arquiteto de software, preciso de um repositório de artefatos para gerenciar dependências e builds do projeto. (✅)
 3. **US03: Configuração do Pipeline CI/CD no Jenkins** Como equipe de DevOps, queremos automatizar o processo de integração e entrega contínua usando Jenkins, para garantir builds consistentes e implantação automatizada.
 4. **US04 - Cadastro de Usuário**: Como usuário, quero me cadastrar no sistema fornecendo meus dados pessoais para que eu possa ter acesso às funcionalidades.
 5. **US05 - Login de Usuário**: Como usuário cadastrado, quero fazer login no sistema utilizando minhas credenciais para ter acesso às funcionalidades autenticadas.
