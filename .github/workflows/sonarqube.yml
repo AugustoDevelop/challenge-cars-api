@@ -1,0 +1,54 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: Build and Analyze with SonarQube
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+      security-events: write
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for SonarQube analysis
+
+      # Set up JDK 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin' # Temurin is a popular JDK distribution
+          cache: maven  # Enable dependency caching for Maven
+
+      # Cache SonarQube Scanner
+      - name: Cache SonarQube Scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # Build and analyze the project
+      - name: Build and analyze with SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # SonarCloud token from GitHub Secrets
+        run: |
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=AugustoDevelop_challenge-cars-api \
+            -Dsonar.organization=augustodevelop \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
