@@ -97,16 +97,17 @@
 	</build>
 
 	<distributionManagement>
+
 		<repository>
 			<id>releases</id>
 			<name>Releases Repository</name>
 			<url>https://trial0v6fh8.jfrog.io/artifactory/cars-api-libs-release-local/</url>
 		</repository>
+
 		<snapshotRepository>
 			<id>snapshots</id>
 			<name>Snapshots Repository</name>
 			<url>https://trial0v6fh8.jfrog.io/artifactory/cars-api-libs-snapshot/</url>
 		</snapshotRepository>
 	</distributionManagement>
-
 </project>
