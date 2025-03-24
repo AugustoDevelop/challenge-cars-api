@@ -14,20 +14,20 @@ pipeline {
         stage('Detect Environment') {
             steps {
                 script {
-                    if (env.GIT_BRANCH == 'origin/develop') {
+                    if (env.BRANCH_NAME.contains('develop')) {
                         env.HEROKU_APP = 'challenge-cars-api-developer'
                         env.ENVIRONMENT = 'develop'
                         env.SPRING_PROFILE = 'dev'
-                    } else if (env.GIT_BRANCH == 'origin/staging') {
+                    } else if (env.BRANCH_NAME.contains('staging')) {
                         env.HEROKU_APP = 'challenge-cars-api-staging'
                         env.ENVIRONMENT = 'staging'
                         env.SPRING_PROFILE = 'stag'
-                    } else if (env.GIT_BRANCH == 'origin/production') {
+                    } else if (env.BRANCH_NAME.contains('production')) {
                         env.HEROKU_APP = 'challenge-cars-api-production'
                         env.ENVIRONMENT = 'production'
                         env.SPRING_PROFILE = 'prod'
                     } else {
-                        error "Branch não configurada para deploy: ${env.GIT_BRANCH}"
+                        error "Branch não configurada para deploy: ${env.BRANCH_NAME}"
                     }
                     echo "Deploying to ${env.ENVIRONMENT} environment (${env.HEROKU_APP})"
                 }
@@ -49,9 +49,11 @@ pipeline {
                         -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
-
 
         stage('Compile and Unit Tests') {
             steps {
@@ -64,19 +66,6 @@ pipeline {
                     sourcePattern: '**/src/main/java',
                     exclusionPattern: '**/src/test*'
                 )
-            }
-        }
-
-        stage('Static Code Analysis') {
-            steps {
-                // Análise SonarQube
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -B'
-                }
-                // Aguardar resultado da análise do SonarQube
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
             }
         }
 
@@ -107,6 +96,8 @@ pipeline {
         stage('Push to Heroku') {
             steps {
                 script {
+                    echo "Deploying Docker image to Heroku (${env.HEROKU_APP})"
+
                     // Login no registro do Heroku
                     sh "docker login --username=_ --password=${HEROKU_API_KEY} registry.heroku.com"
 
@@ -116,7 +107,7 @@ pipeline {
                     // Push da imagem para o Heroku
                     sh "docker push registry.heroku.com/${env.HEROKU_APP}/web"
 
-                    // Liberar a imagem (equivalente ao deploy)
+                    // Liberar a imagem (deploy)
                     sh "heroku container:release web --app ${env.HEROKU_APP}"
                 }
             }
@@ -125,11 +116,13 @@ pipeline {
         stage('Smoke Test') {
             steps {
                 script {
-                    // Verificar se a aplicação subiu corretamente
-                    sh """
-                        sleep 30
-                        curl -s --retry 5 --retry-delay 10 https://${env.HEROKU_APP}.herokuapp.com/actuator/health | grep UP
-                    """
+                    echo "Running Smoke Test for ${env.HEROKU_APP}"
+                    retry(3) {
+                        sh """
+                            sleep 30
+                            curl -s --retry 5 --retry-delay 10 https://${env.HEROKU_APP}.herokuapp.com/actuator/health | grep UP
+                        """
+                    }
                 }
             }
         }
@@ -137,7 +130,6 @@ pipeline {
 
     post {
         always {
-            // Publicar relatórios de teste
             publishHTML(target: [
                 allowMissing: false,
                 alwaysLinkToLastBuild: false,
@@ -146,21 +138,14 @@ pipeline {
                 reportFiles: 'index.html',
                 reportName: 'Code Coverage Report'
             ])
-
-            // Limpeza
             sh "docker system prune -f"
             deleteDir()
         }
         success {
-            // Notificação de sucesso
             echo "Deployment to ${env.ENVIRONMENT} successful!"
-            // Exemplo de notificação Slack
-            // slackSend channel: '#deployments', color: 'good', message: "Deployment to ${env.ENVIRONMENT} successful!"
         }
         failure {
-            // Notificação de falha
             echo "Deployment to ${env.ENVIRONMENT} failed!"
-            // slackSend channel: '#deployments', color: 'danger', message: "Deployment to ${env.ENVIRONMENT} failed!"
         }
     }
 }
