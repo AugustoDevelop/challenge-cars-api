@@ -83,28 +83,33 @@ Para o requisito extra, implementamos um sistema de contagem de uso dos carros q
 6. **Filter Chain**: Para processamento de requisições HTTP e autenticação JWT.
 
 ## Requisitos
-
-- Java 8
-- Maven 3.6+
+Certifique-se de que os seguintes itens estejam instalados e configurados no seu sistema:
 - Git
+- Java 17
+- Maven 3.6+
+- Docker (v20.10 ou superior)
+- Verifique se as portas 8080 e 50000 estão livres no seu sistema para o Jenkins.
 
 ## Como Executar
 
-### Clonando o Repositório
+### Iniciando o Jenkins
+No diretório do projeto onde o docker-compose.yml está localizado, execute:
 
 ```bash
-git clone https://github.com/seu-usuario/car-user-api.git
-cd car-user-api
+  docker-compose up -d
+```
+Após a execução do comando acima, acesse o Jenkins em `http://localhost:8080` e siga as instruções para configurar o Jenkins.
+
+```bash
+  docker-compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
 ### Compilando e Executando com Maven
 
 ```bash
-mvn clean install
-mvn spring-boot:run
+  mvn clean install
+  mvn spring-boot:run
 ```
-
-A aplicação estará disponível em `http://localhost:8080`
 
 ### Executando com o JAR
 
@@ -149,7 +154,7 @@ PUT /api/cars/{id} - Atualizar carro por ID
 #### Cadastro de Usuário
 
 ```bash
-curl -X POST http://localhost:8080/api/users \
+  curl -X POST http://localhost:8080/api/users \
 -H "Content-Type: application/json" \
 -d '{
     "firstName": "Hello",
@@ -173,7 +178,7 @@ curl -X POST http://localhost:8080/api/users \
 #### Login de Usuário
 
 ```bash
-curl -X POST http://localhost:8080/api/signin \
+  curl -X POST http://localhost:8080/api/signin \
 -H "Content-Type: application/json" \
 -d '{
     "login": "hello.world",
@@ -184,7 +189,7 @@ curl -X POST http://localhost:8080/api/signin \
 #### Consulta de Informações do Usuário Logado
 
 ```bash
-curl -X GET http://localhost:8080/api/me \
+  curl -X GET http://localhost:8080/api/me \
 -H "Authorization: Bearer {token-jwt}"
 ```
 
@@ -193,13 +198,13 @@ curl -X GET http://localhost:8080/api/me \
 Para executar os testes unitários:
 
 ```bash
-mvn test
+  mvn test
 ```
 
 Para executar relatório de cobertura de testes:
 
 ```bash
-mvn verify
+  mvn verify
 ```
 
 O relatório de cobertura estará disponível em `target/site/jacoco/index.html`
@@ -244,3 +249,14 @@ Você também pode executar a aplicação usando Docker:
 docker build -t car-user-api .
 docker run -p 8080:8080 car-user-api
 ```
+
+
+Acesse os serviços:
+
+Jenkins: http://localhost:8080
+
+SonarQube: http://localhost:9000
+
+JFrog: http://localhost:8081
+
+Aplicação: http://localhost:8082
