@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        HEROKU_API_KEY = credentials('HRKU-0fc202e7-bbfe-4103-a9b6-3e3ceff0548e')
         MVN_HOME = tool 'Maven-3.9'
         JAVA_HOME = tool 'JDK-17'
         SONAR_SERVER = credentials('sonarqube-url') // URL do SonarQube
