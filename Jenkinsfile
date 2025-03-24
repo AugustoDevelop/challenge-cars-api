@@ -76,6 +76,24 @@ pipeline {
             }
         }
 
+        stage('Publish JaCoCo Report') {
+            steps {
+                script {
+                    // Verifica se o diretório do relatório existe antes de publicá-lo
+                    def reportDir = 'target/site/jacoco'
+                    if (fileExists(reportDir)) {
+                        publishHTML([
+                            reportName: 'Code Coverage Report',
+                            reportDir: reportDir,
+                            reportFiles: 'index.html'
+                        ])
+                    } else {
+                        echo "JaCoCo report directory not found: ${reportDir}"
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
