@@ -37,6 +37,7 @@ pipeline {
         stage('Checkout code') {
             steps {
                 checkout scm
+                sh 'ls -l'
             }
         }
 
@@ -45,8 +46,8 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh """
                     ./mvnw sonar:sonar \
-                        -Dsonar.host.url=${SONAR_SERVER} \
-                        -Dsonar.login=${SONAR_TOKEN}
+                        -Dsonar.host.url=$SONAR_SERVER \
+                        -Dsonar.login=$SONAR_TOKEN
                     """
                 }
                 timeout(time: 10, unit: 'MINUTES') {
@@ -117,7 +118,7 @@ pipeline {
                     echo "Deploying Docker image to Heroku (${env.HEROKU_APP})"
 
                     // Login no registro do Heroku
-                    sh "docker login --username=_ --password=${HEROKU_API_KEY} registry.heroku.com"
+                    sh "docker login --username=_ --password=$HEROKU_API_KEY registry.heroku.com"
 
                     // Tag da imagem para o formato do Heroku
                     sh "docker tag ${env.HEROKU_APP} registry.heroku.com/${env.HEROKU_APP}/web"
