@@ -1,24 +1,24 @@
 package com.api.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
+/**
+ * Entity representing a car.
+ */
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "car")
+@Table(name = "cars")
 public class Car {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "`year`")
+    @Column(name = "year")
     private Integer year;
 
     @Column(name = "license_plate", unique = true)
@@ -30,7 +30,13 @@ public class Car {
     @Column(name = "color")
     private String color;
 
-    @ManyToMany(mappedBy = "cars")
-    @JsonIgnore
-    private List<Users> users;
+    @Column(name = "usage_amount")
+    private Integer usageAmount = 0;
+
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

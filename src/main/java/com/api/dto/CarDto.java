@@ -1,11 +1,14 @@
 package com.api.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Data transfer object for car entity.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

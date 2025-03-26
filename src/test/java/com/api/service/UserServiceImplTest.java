@@ -1,7 +1,7 @@
 package com.api.service;
 
 import com.api.dto.UserDto;
-import com.api.entity.Users;
+import com.api.entity.User;
 import com.api.exception.DuplicateResourceException;
 import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
@@ -9,6 +9,7 @@ import com.api.helpers.UserDtoHelper;
 import com.api.helpers.UsersHelper;
 import com.api.repository.CarRepository;
 import com.api.repository.UserRepository;
+import com.api.util.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,21 +31,21 @@ class UserServiceImplTest {
     @Autowired
     private CarRepository carRepository;
 
-    private Users users;
+    private User user;
     private UserDto userDto;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
         carRepository.deleteAll();
-        users = UsersHelper.createUsersEntity();
+        user = UsersHelper.createUsersEntity();
         userDto = UserDtoHelper.createUserDto();
     }
 
     @Test
     void testCreateUserValid() {
-        Users user = userService.createUser(userDto);
-        assertNotNull(user);
+        User userExist = userService.createUser(userDto);
+        assertNotNull(userExist);
     }
 
     @Test
@@ -67,7 +68,7 @@ class UserServiceImplTest {
 
     @Test
     void testCreateUserEmailAlreadyExists() {
-        Users existingUser = userRepository.save(users);
+        User existingUser = userRepository.save(user);
         userDto.setEmail(existingUser.getEmail());
 
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
@@ -75,7 +76,7 @@ class UserServiceImplTest {
 
     @Test
     void testCreateUserLoginAlreadyExists() {
-        Users existingUser = userRepository.save(users);
+        User existingUser = userRepository.save(user);
         userDto.setLogin(existingUser.getLogin());
 
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
@@ -84,8 +85,8 @@ class UserServiceImplTest {
 
     @Test
     void testGetUserByIdExisting() {
-        Users user = userRepository.save(users);
-        Users foundUser = userService.getUserById(user.getId());
+        User userExist = userRepository.save(this.user);
+        User foundUser = userService.getUserById(userExist.getId());
         assertNotNull(foundUser);
     }
 
@@ -96,9 +97,9 @@ class UserServiceImplTest {
 
     @Test
     void testDeleteUserByIdSuccess() {
-        Users user = userRepository.save(users);
-        assertDoesNotThrow(() -> userService.deleteUserById(user.getId()));
-        assertFalse(userRepository.existsById(user.getId()));
+        User userExist = userRepository.save(this.user);
+        assertDoesNotThrow(() -> userService.deleteUserById(userExist.getId()));
+        assertFalse(userRepository.findByIdAndStatus(userExist.getId(), UserStatus.ACTIVE).isPresent());
     }
 
     @Test
@@ -108,12 +109,12 @@ class UserServiceImplTest {
 
     @Test
     void testUpdateUserSuccess() {
-        Users user = userRepository.save(users);
+        User newUser = userRepository.save(this.user);
         UserDto userUpdates = UserDtoHelper.createUserDto();
         userUpdates.setFirstName("Update first name");
         userUpdates.setLastName("Update last name");
 
-        Users updatedUser = userService.updateUser(user.getId(), userUpdates);
+        User updatedUser = userService.updateUser(newUser.getId(), userUpdates);
         assertNotNull(updatedUser);
         assertEquals("Update first name", updatedUser.getFirstName());
         assertEquals("Update last name", updatedUser.getLastName());
@@ -126,8 +127,8 @@ class UserServiceImplTest {
 
     @Test
     void testUpdateUserEmailAlreadyExists() {
-        Users existingUser1 = userRepository.save(users);
-        Users existingUser2 = new Users();
+        User existingUser1 = userRepository.save(user);
+        User existingUser2 = new User();
         existingUser2.setFirstName("João");
         existingUser2.setLastName("Silva");
         existingUser2.setBirthday("2024-01-01");
@@ -137,10 +138,10 @@ class UserServiceImplTest {
         existingUser2.setPhone("123456789");
         userRepository.save(existingUser2);
         userDto.setEmail(existingUser2.getEmail());
-
+        Long userId = existingUser1.getId();
         assertThrows(
                 DuplicateResourceException.class,
-                () -> userService.updateUser(existingUser1.getId(), userDto)
+                () -> userService.updateUser(userId, userDto)
         );
     }
 

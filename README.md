@@ -32,6 +32,7 @@ API RESTful para gerenciamento de usuários e carros, com autenticação JWT, de
 15. **US-15 - Atualização de Carro**: Como usuário logado, quero atualizar os dados de um carro cadastrado em minha conta.(✅)
 16. **US-16 - Remoção de Carro**: Como usuário logado, quero remover um carro cadastrado em minha conta.(✅)
 17. **US-17 - Ranking de Usuários e Carros**: Como desenvolvedor, quero implementar um sistema de ranking que ordene usuários e carros por frequência de uso.
+18. **US-18 - Documentação (Javadoc)**: Como desenvolvedor, quero gerar e manter a documentação Javadoc para facilitar a compreensão e manutenção do código.(✅)
 
 ## Solução
 
@@ -115,7 +116,7 @@ Após a execução do comando acima, acesse o Jenkins em `http://localhost:8080`
 ### Executando com o JAR
 
 ```bash
-java -jar target/car-users-api-0.0.1-SNAPSHOT.jar
+java -jar target/car-user-api-0.0.1-SNAPSHOT.jar
 ```
 
 ### Acessando o Console H2
@@ -132,11 +133,11 @@ O console do banco de dados H2 estará disponível em `http://localhost:8080/h2-
 
 ```
 POST /api/signin - Login de usuário
-GET /api/users - Listar todos os usuários
-POST /api/users - Cadastrar novo usuário
-GET /api/users/{id} - Buscar usuário por ID
-DELETE /api/users/{id} - Remover usuário por ID
-PUT /api/users/{id} - Atualizar usuário por ID
+GET /api/user - Listar todos os usuários
+POST /api/user - Cadastrar novo usuário
+GET /api/user/{id} - Buscar usuário por ID
+DELETE /api/user/{id} - Remover usuário por ID
+PUT /api/user/{id} - Atualizar usuário por ID
 ```
 
 ### Rotas Autenticadas (requerem token JWT)
@@ -155,7 +156,7 @@ PUT /api/cars/{id} - Atualizar carro por ID
 #### Cadastro de Usuário
 
 ```bash
-  curl -X POST http://localhost:8080/api/users \
+  curl -X POST http://localhost:8080/api/user \
 -H "Content-Type: application/json" \
 -d '{
     "firstName": "Hello",
@@ -231,11 +232,11 @@ Para fazer deploy no Heroku:
    ```
 3. Crie um novo aplicativo Heroku
    ```bash
-   heroku create car-users-api
+   heroku create car-user-api
    ```
 4. Configure o remote do Git
    ```bash
-   heroku git:remote -a car-users-api
+   heroku git:remote -a car-user-api
    ```
 5. Faça o push para o Heroku
    ```bash
@@ -247,8 +248,8 @@ Para fazer deploy no Heroku:
 Você também pode executar a aplicação usando Docker:
 
 ```bash
-docker build -t car-users-api .
-docker run -p 8080:8080 car-users-api
+docker build -t car-user-api .
+docker run -p 8080:8080 car-user-api
 ```
 
 

@@ -2,7 +2,7 @@ package com.api.integration;
 
 import com.api.dto.UserDto;
 import com.api.entity.Car;
-import com.api.entity.Users;
+import com.api.entity.User;
 import com.api.exception.DuplicateResourceException;
 import com.api.helpers.CarHelper;
 import com.api.helpers.UserDtoHelper;
@@ -41,20 +41,20 @@ class UserControllerIntegrationTest {
     private UserServiceInterface userService;
 
     private UserDto userDto;
-    private Users users;
+    private User user;
 
 
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
         userDto = UserDtoHelper.createUserDto();
-        users = UsersHelper.createUsersEntity();
+        user = UsersHelper.createUsersEntity();
     }
 
 
     @Test
     void testCreateUserValid() {
-        ResponseEntity<Users> response = restTemplate.postForEntity("/users/create", userDto, Users.class);
+        ResponseEntity<User> response = restTemplate.postForEntity("/users/create", userDto, User.class);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -78,6 +78,7 @@ class UserControllerIntegrationTest {
             case "birthday" -> userDtoInvalid.setBirthday(invalidValue);
             case "password" -> userDtoInvalid.setPassword(invalidValue);
             case "phone" -> userDtoInvalid.setPhone(invalidValue);
+            default -> throw new IllegalArgumentException("Unexpected field: " + fieldName);
         }
 
         ResponseEntity<String> response = restTemplate.postForEntity("/users/create", userDtoInvalid, String.class);
@@ -87,7 +88,7 @@ class UserControllerIntegrationTest {
 
     @Test
     void testCreateUserEmailAlreadyExists() {
-        Users existingUser = userRepository.save(users);
+        User existingUser = userRepository.save(user);
         userDto.setEmail(existingUser.getEmail());
 
         ResponseEntity<String> response = restTemplate.postForEntity("/users/create", userDto, String.class);
@@ -97,7 +98,7 @@ class UserControllerIntegrationTest {
 
     @Test
     void testCreateUserLoginAlreadyExists() {
-        Users existingUser = userRepository.save(users);
+        User existingUser = userRepository.save(user);
         userDto.setLogin(existingUser.getLogin());
 
         ResponseEntity<String> response = restTemplate.postForEntity("/users/create", userDto, String.class);
@@ -107,13 +108,13 @@ class UserControllerIntegrationTest {
 
     @Test
     void testGetAllUsersSuccess() {
-        users.setLogin("Login");
-        users.setEmail("Email");
-        Users user1 = userRepository.save(users);
-        Users user2 = userRepository.save(UsersHelper.createUsersEntity());
+        user.setLogin("Login");
+        user.setEmail("Email");
+        User user1 = userRepository.save(user);
+        User user2 = userRepository.save(UsersHelper.createUsersEntity());
         user2.setFirstName("Outro Nome");
 
-        ResponseEntity<List<Users>> response = restTemplate.exchange("/users", HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+        ResponseEntity<List<User>> response = restTemplate.exchange("/users", HttpMethod.GET, null, new ParameterizedTypeReference<>() {
         });
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -126,7 +127,7 @@ class UserControllerIntegrationTest {
 
     @Test
     void testGetAllUsersEmptyList() {
-        ResponseEntity<List<Users>> response = restTemplate.exchange("/users", HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+        ResponseEntity<List<User>> response = restTemplate.exchange("/users", HttpMethod.GET, null, new ParameterizedTypeReference<>() {
         });
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -137,15 +138,15 @@ class UserControllerIntegrationTest {
 
     @Test
     void testGetUserByIdSuccess() {
-        Users user = userRepository.save(users);
+        User userExist = userRepository.save(this.user);
 
-        ResponseEntity<Users> response = restTemplate.getForEntity("/users/" + user.getId(), Users.class);
+        ResponseEntity<User> response = restTemplate.getForEntity("/users/" + userExist.getId(), User.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(user.getId(), response.getBody().getId());
-        assertEquals(user.getFirstName(), response.getBody().getFirstName());
-        assertEquals(user.getLastName(), response.getBody().getLastName());
+        assertEquals(userExist.getId(), response.getBody().getId());
+        assertEquals(userExist.getFirstName(), response.getBody().getFirstName());
+        assertEquals(userExist.getLastName(), response.getBody().getLastName());
     }
 
     @Test
@@ -156,12 +157,11 @@ class UserControllerIntegrationTest {
 
     @Test
     void testDeleteUserByIdSuccess() {
-        Users user = userRepository.save(users);
+        User newUser = userRepository.save(this.user);
 
-        ResponseEntity<Void> response = restTemplate.exchange("/users/" + user.getId(), HttpMethod.DELETE, null, Void.class);
+        ResponseEntity<Void> response = restTemplate.exchange("/users/" + newUser.getId(), HttpMethod.DELETE, null, Void.class);
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        assertFalse(userRepository.existsById(user.getId()));
     }
 
     @Test
@@ -173,7 +173,7 @@ class UserControllerIntegrationTest {
 
     @Test
     void testUpdateUser() {
-        Users existingUser = userRepository.save(users);
+        User existingUser = userRepository.save(user);
 
         UserDto updatedUserDto = new UserDto();
         updatedUserDto.setFirstName("João Jose");
@@ -185,7 +185,7 @@ class UserControllerIntegrationTest {
         updatedUserDto.setPhone("123456789");
 
         HttpEntity<UserDto> entity = createJsonEntity(updatedUserDto);
-        ResponseEntity<Users> updateResponse = restTemplate.exchange("/users/" + existingUser.getId(), HttpMethod.PUT, entity, Users.class);
+        ResponseEntity<User> updateResponse = restTemplate.exchange("/users/" + existingUser.getId(), HttpMethod.PUT, entity, User.class);
         assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
 
         assertEquals("João Jose", Objects.requireNonNull(updateResponse.getBody()).getFirstName());
@@ -199,8 +199,8 @@ class UserControllerIntegrationTest {
 
     @Test
     void testUpdateUserLoginAlreadyExists() {
-        Users existingUser1 = userRepository.save(users);
-        Users existingUser2 = new Users();
+        User existingUser1 = userRepository.save(user);
+        User existingUser2 = new User();
         existingUser2.setFirstName("João");
         existingUser2.setLastName("Silva");
         existingUser2.setBirthday("2024-01-01");
@@ -210,34 +210,34 @@ class UserControllerIntegrationTest {
         existingUser2.setPhone("123456789");
         userRepository.save(existingUser2);
         userDto.setLogin(existingUser2.getLogin());
-
+        Long userId = existingUser1.getId();
         assertThrows(
                 DuplicateResourceException.class,
-                () -> userService.updateUser(existingUser1.getId(), userDto)
+                () -> userService.updateUser(userId, userDto)
         );
     }
 
     @Test
     void testUpdateUserCarsNonExistingCar() {
-        Users user = userRepository.save(users);
+        User newUser = userRepository.save(this.user);
         Car carUpdate = CarHelper.createCar();
         userDto.setCars(List.of(carUpdate));
 
-        Users updatedUser = userService.updateUser(user.getId(), userDto);
+        User updatedUser = userService.updateUser(newUser.getId(), userDto);
         assertNotNull(updatedUser.getCars());
         assertEquals(1, updatedUser.getCars().size());
     }
 
     @Test
     void testUpdateUserCarsDuplicateLicensePlate() {
-        Users user = userRepository.save(users);
+        User newUser = userRepository.save(this.user);
         Car existingCar = carRepository.save(CarHelper.createCar());
         Car carUpdate = CarHelper.createCar();
         carUpdate.setLicensePlate(existingCar.getLicensePlate());
         userDto.setCars(List.of(carUpdate));
 
         // Não deve lançar exceção aqui, pois a lógica atual não verifica duplicatas de placa em update
-        Users updatedUser = userService.updateUser(user.getId(), userDto);
+        User updatedUser = userService.updateUser(newUser.getId(), userDto);
         assertNotNull(updatedUser.getCars());
         assertEquals(1, updatedUser.getCars().size());
     }
