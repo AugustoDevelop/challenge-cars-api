@@ -78,6 +78,8 @@ class UserControllerIntegrationTest {
 
     @Test
     void testGetAllUsersSuccess() {
+        users.setLogin("Login");
+        users.setEmail("Email");
         Users user1 = userRepository.save(users);
         Users user2 = userRepository.save(UsersHelper.createUsersEntity());
         user2.setFirstName("Outro Nome");
