@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -50,6 +52,18 @@ class UserServiceImplTest {
         UserDto userDtoInvalid = UserDtoHelper.createUserDtoInvalid();
         assertThrows(MissingFieldsException.class, () -> userService.createUser(userDtoInvalid));
     }
+
+    @Test
+    void testCreateUserCombinatorialAnalysis() {
+        List<String> fields = List.of("firstName", "lastName", "birthday", "password", "phone");
+
+        for (int mask = 1; mask < (1 << fields.size()); mask++) {
+            UserDto testDto = createTestUserDto(userDto, fields, mask);
+
+            assertThrows(MissingFieldsException.class, () -> userService.createUser(testDto));
+        }
+    }
+
 
     @Test
     void testCreateUserEmailAlreadyExists() {
@@ -128,6 +142,44 @@ class UserServiceImplTest {
                 DuplicateResourceException.class,
                 () -> userService.updateUser(existingUser1.getId(), userDto)
         );
+    }
+
+    private UserDto createTestUserDto(UserDto baseUserDto, List<String> fields, int mask) {
+        UserDto testDto = new UserDto();
+        testDto.setEmail(baseUserDto.getEmail());
+        testDto.setLogin(baseUserDto.getLogin());
+
+        for (int i = 0; i < fields.size(); i++) {
+            if ((mask & (1 << i)) != 0) {
+                clearField(testDto, fields.get(i));
+            } else {
+                setValidField(testDto, baseUserDto, fields.get(i));
+            }
+        }
+
+        return testDto;
+    }
+
+    private void clearField(UserDto testDto, String fieldName) {
+        switch (fieldName) {
+            case "firstName" -> testDto.setFirstName("");
+            case "lastName" -> testDto.setLastName("");
+            case "birthday" -> testDto.setBirthday("");
+            case "password" -> testDto.setPassword("");
+            case "phone" -> testDto.setPhone("");
+            default -> throw new UnsupportedOperationException("Campo não suportado: " + fieldName);
+        }
+    }
+
+    private void setValidField(UserDto testDto, UserDto baseUserDto, String fieldName) {
+        switch (fieldName) {
+            case "firstName" -> testDto.setFirstName(baseUserDto.getFirstName());
+            case "lastName" -> testDto.setLastName(baseUserDto.getLastName());
+            case "birthday" -> testDto.setBirthday(baseUserDto.getBirthday());
+            case "password" -> testDto.setPassword(baseUserDto.getPassword());
+            case "phone" -> testDto.setPhone(baseUserDto.getPhone());
+            default -> throw new UnsupportedOperationException("Campo não suportado: " + fieldName);
+        }
     }
 
 }

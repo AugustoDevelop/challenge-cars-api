@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -32,9 +33,7 @@ public class UserServiceImpl implements UserServiceInterface {
         if (userDto.getFirstName().isBlank() ||
             userDto.getLastName().isBlank() ||
             userDto.getBirthday().isBlank() ||
-            userDto.getLogin().isBlank() ||
             userDto.getPassword().isBlank() ||
-            userDto.getEmail().isBlank() ||
             userDto.getPhone().isBlank()
         ) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
@@ -102,23 +101,23 @@ public class UserServiceImpl implements UserServiceInterface {
 
         if (userDto.getCars() != null) {
             List<Car> cars = userDto.getCars().stream()
-                    .map(carDto -> {
-                        Car existingCar = carRepository.findByLicensePlate(carDto.getLicensePlate())
-                                .orElse(null);
+                .map(carDto -> {
+                    Car existingCar = carRepository.findByLicensePlate(carDto.getLicensePlate())
+                            .orElse(null);
 
-                        if (existingCar != null) {
-                            return existingCar;
-                        } else {
-                            // Se não existir, crie um novo carro
-                            Car newCar = new Car();
-                            newCar.setYear(carDto.getYear());
-                            newCar.setLicensePlate(carDto.getLicensePlate());
-                            newCar.setModel(carDto.getModel());
-                            newCar.setColor(carDto.getColor());
-                            return newCar;
-                        }
-                    })
-                    .toList();
+                    if (existingCar != null) {
+                        return existingCar;
+                    } else {
+                        // Se não existir, crie um novo carro
+                        Car newCar = new Car();
+                        newCar.setYear(carDto.getYear());
+                        newCar.setLicensePlate(carDto.getLicensePlate());
+                        newCar.setModel(carDto.getModel());
+                        newCar.setColor(carDto.getColor());
+                        return newCar;
+                    }
+                })
+                .toList();
 
             // Salve os carros que ainda não estão no banco
             List<Car> savedCars = cars.stream()
@@ -137,11 +136,11 @@ public class UserServiceImpl implements UserServiceInterface {
         for (Car carUpdate : carsUpdates) {
             Car existingCar;
 
-            if (carUpdate.getLicensePlate() != null) {
-                existingCar = carRepository.findByLicensePlate(carUpdate.getLicensePlate())
-                        .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
+            if (carUpdate.getLicensePlate() == null) {
+                throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
             } else {
-                existingCar = new Car();
+                Optional<Car> optionalCar = carRepository.findByLicensePlate(carUpdate.getLicensePlate());
+                existingCar = optionalCar.orElseGet(Car::new);
             }
 
             existingCar.setYear(carUpdate.getYear());
@@ -154,6 +153,7 @@ public class UserServiceImpl implements UserServiceInterface {
             existingUsers.getCars().add(savedCar);
         }
     }
+
 
     private void validateEmailAndLogin(Users existingUsers, Users usersUpdates) {
         if (

@@ -37,4 +37,14 @@ public class UserDto {
     private String phone;
 
     private List<Car> cars;
+
+    public UserDto(String firstName, String lastName, String birthday, String login, String password, String email, String phone) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthday = birthday;
+        this.login = login;
+        this.password = password;
+        this.email = email;
+        this.phone = phone;
+    }
 }
