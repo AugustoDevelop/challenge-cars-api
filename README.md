@@ -19,18 +19,18 @@ API RESTful para gerenciamento de usuários e carros, com autenticação JWT, de
 2. **US-02: Integração com JFrog Artifactory para Gerenciamento de Artefatos** Como arquiteto de software, preciso de um repositório de artefatos para gerenciar dependências e builds do projeto. (✅)
 3. **US-03: Configuração do Pipeline CI/CD no Jenkins** Como equipe de DevOps, queremos automatizar o processo de integração e entrega contínua usando Jenkins, para garantir builds consistentes e implantação automatizada. (⚠️)
 4. **US-04 - Criação do controller Advice**: Como usuário, quero receber os erros correspondentes a cada exceção lançada. (✅)
-5. **US-05 - Cadastro de Usuário**: Como usuário, quero me cadastrar no sistema fornecendo meus dados pessoais para que eu possa ter acesso às funcionalidades.
-6. **US-06 - Consulta de Usuários**: Como usuário, quero visualizar a lista de todos os usuários cadastrados no sistema.
-7. **US-07 - Consulta de Usuário por ID**: Como usuário, quero consultar os dados de um usuário específico informando seu ID.
-8. **US-08 - Atualização de Usuário**: Como usuário cadastrado, quero atualizar meus dados cadastrais no sistema.
-9. **US-09 - Remoção de Usuário**: Como usuário cadastrado, quero remover minha conta do sistema.
+5. **US-05 - Cadastro de Usuário**: Como usuário, quero me cadastrar no sistema fornecendo meus dados pessoais para que eu possa ter acesso às funcionalidades.(✅)
+6. **US-06 - Consulta de Usuários**: Como usuário, quero visualizar a lista de todos os usuários cadastrados no sistema.(✅)
+7. **US-07 - Consulta de Usuário por ID**: Como usuário, quero consultar os dados de um usuário específico informando seu ID.(✅)
+8. **US-08 - Atualização de Usuário**: Como usuário cadastrado, quero atualizar meus dados cadastrais no sistema.(✅)
+9. **US-09 - Remoção de Usuário**: Como usuário cadastrado, quero remover minha conta do sistema.(✅)
 10. **US-10 - Login de Usuário**: Como usuário cadastrado, quero fazer login no sistema utilizando minhas credenciais para ter acesso às funcionalidades autenticadas.
 11. **US-11 - Consulta de Informações do Usuário Logado**: Como usuário logado, quero visualizar minhas informações pessoais, data de criação e último login.
-12. **US-12 - Cadastro de Carro**: Como usuário logado, quero cadastrar um novo carro em minha conta.
-13. **US-13 - Consulta de Carros do Usuário**: Como usuário logado, quero visualizar todos os carros cadastrados em minha conta.
-14. **US-14 - Consulta de Carro por ID**: Como usuário logado, quero consultar os dados de um carro específico cadastrado em minha conta.
-15. **US-15 - Atualização de Carro**: Como usuário logado, quero atualizar os dados de um carro cadastrado em minha conta.
-16. **US-16 - Remoção de Carro**: Como usuário logado, quero remover um carro cadastrado em minha conta.
+12. **US-12 - Cadastro de Carro**: Como usuário logado, quero cadastrar um novo carro em minha conta.(✅)
+13. **US-13 - Consulta de Carros do Usuário**: Como usuário logado, quero visualizar todos os carros cadastrados em minha conta.(✅)
+14. **US-14 - Consulta de Carro por ID**: Como usuário logado, quero consultar os dados de um carro específico cadastrado em minha conta.(✅)
+15. **US-15 - Atualização de Carro**: Como usuário logado, quero atualizar os dados de um carro cadastrado em minha conta.(✅)
+16. **US-16 - Remoção de Carro**: Como usuário logado, quero remover um carro cadastrado em minha conta.(✅)
 17. **US-17 - Ranking de Usuários e Carros**: Como desenvolvedor, quero implementar um sistema de ranking que ordene usuários e carros por frequência de uso.
 
 ## Solução
@@ -115,7 +115,7 @@ Após a execução do comando acima, acesse o Jenkins em `http://localhost:8080`
 ### Executando com o JAR
 
 ```bash
-java -jar target/car-user-api-0.0.1-SNAPSHOT.jar
+java -jar target/car-users-api-0.0.1-SNAPSHOT.jar
 ```
 
 ### Acessando o Console H2
@@ -231,11 +231,11 @@ Para fazer deploy no Heroku:
    ```
 3. Crie um novo aplicativo Heroku
    ```bash
-   heroku create car-user-api
+   heroku create car-users-api
    ```
 4. Configure o remote do Git
    ```bash
-   heroku git:remote -a car-user-api
+   heroku git:remote -a car-users-api
    ```
 5. Faça o push para o Heroku
    ```bash
@@ -247,8 +247,8 @@ Para fazer deploy no Heroku:
 Você também pode executar a aplicação usando Docker:
 
 ```bash
-docker build -t car-user-api .
-docker run -p 8080:8080 car-user-api
+docker build -t car-users-api .
+docker run -p 8080:8080 car-users-api
 ```
 
 
