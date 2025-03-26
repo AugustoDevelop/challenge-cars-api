@@ -14,6 +14,7 @@ pipeline {
         stage('Detect Environment') {
             steps {
                 script {
+                    echo " Detect Environment with branch: ${env.BRANCH_NAME}"
                     if (env.BRANCH_NAME.contains('develop')) {
                         env.HEROKU_APP = 'challenge-cars-api-developer'
                         env.ENVIRONMENT = 'develop'
