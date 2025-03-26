@@ -88,8 +88,7 @@ class CarServiceImplTest {
     @Test
     void testUpdateCarSuccess() {
         Car existingCar = new Car();
-        when(carRepository.findById(anyLong())).thenReturn(Optional.of(existingCar));
-
+        when(carRepository.findByLicensePlate(anyString())).thenReturn(Optional.of(existingCar));
         when(carRepository.save(any(Car.class))).thenReturn(existingCar);
 
         carDto.setYear(2020);
@@ -107,10 +106,10 @@ class CarServiceImplTest {
 
     @Test
     void testUpdateCarNonExisting() {
-        when(carRepository.findById(anyLong())).thenReturn(Optional.empty());
+        when(carRepository.findByLicensePlate(anyString())).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> carService.updateCar(1L, carDto));
-        verify(carRepository, times(1)).findById(anyLong());
+        verify(carRepository, times(1)).findByLicensePlate(anyString());
     }
 
 
