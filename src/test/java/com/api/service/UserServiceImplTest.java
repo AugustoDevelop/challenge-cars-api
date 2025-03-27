@@ -5,6 +5,7 @@ import com.api.entity.User;
 import com.api.exception.DuplicateResourceException;
 import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
+import com.api.helpers.CarHelper;
 import com.api.helpers.UserDtoHelper;
 import com.api.helpers.UsersHelper;
 import com.api.repository.CarRepository;
@@ -14,8 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -84,10 +87,15 @@ class UserServiceImplTest {
 
 
     @Test
+    @Transactional
     void testGetUserByIdExisting() {
+        Random random = new Random();
+        int size = random.nextInt(11);
+        user.setCars(CarHelper.createCarList(size));
         User userExist = userRepository.save(this.user);
         User foundUser = userService.getUserById(userExist.getId());
         assertNotNull(foundUser);
+        assertFalse(foundUser.getCars().isEmpty());
     }
 
     @Test
