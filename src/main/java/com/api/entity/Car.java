@@ -12,31 +12,31 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "cars")
+@Table(name = "CARS")
 public class Car {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "year")
+    @Column(name = "YEAR")
     private Integer year;
 
-    @Column(name = "license_plate", unique = true)
+    @Column(name = "LICENSE_PLATE", unique = true)
     private String licensePlate;
 
-    @Column(name = "model")
+    @Column(name = "MODEL")
     private String model;
 
     @Column(name = "color")
     private String color;
 
-    @Column(name = "usage_amount")
+    @Column(name = "USAGE_AMOUNT")
     private Integer usageAmount = 0;
 
-    @Column(name = "photo_url")
+    @Column(name = "PHOTO_URL")
     private String photoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "USERS_ID")
     private User user;
 }

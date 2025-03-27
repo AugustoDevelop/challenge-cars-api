@@ -16,50 +16,50 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
+@Table(name = "USERS")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "first_name")
+    @Column(name = "FIRST_NAME")
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "LAST_NAME")
     private String lastName;
 
-    @Column(name = "birthday")
+    @Column(name = "BIRTHDAY")
     private String birthday;
 
-    @Column(name = "login", unique = true)
+    @Column(name = "LOGIN", unique = true)
     private String login;
 
     @Column(name = "password")
     private String password;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "EMAIL", unique = true)
     private String email;
 
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "CREATED_AT", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "update_at")
+    @Column(name = "UPDATE_AT")
     private LocalDateTime updateAt;
 
-    @Column(name = "last_login")
+    @Column(name = "LAST_LOGIN")
     private LocalDateTime lastLogin;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "STATUS")
     private UserStatus status;
 
-    @Column(name = "photo_url")
+    @Column(name = "PHOTO_URL")
     private String photoUrl;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Car> cars;
 
     /**
