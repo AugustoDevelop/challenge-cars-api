@@ -55,12 +55,12 @@ public class UserMapper {
                     .toList();
 
             // Save the cars that are not yet in the database
-            List<Car> savedCars = cars.stream()
-                    .filter(car -> car.getId() == null) // Filter new cars
-                    .map(carRepository::save)
-                    .toList();
+            cars.stream()
+                .filter(car -> car.getId() == null) // Filter new cars
+                .map(carRepository::save)
+                .toList();
 
-            user.setCars(savedCars);
+            user.setCars(cars);
         }
         user.setStatus(UserStatus.ACTIVE);
         return user;

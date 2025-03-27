@@ -25,25 +25,49 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests for the UserController.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UserControllerIntegrationTest {
 
+    /**
+     * TestRestTemplate for making HTTP requests in tests.
+     */
     @Autowired
     private TestRestTemplate restTemplate;
 
+    /**
+     * Repository for managing User entities.
+     */
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Repository for managing User entities.
+     */
     @Autowired
     private CarRepository carRepository;
 
+    /**
+     * Service interface for User operations.
+     */
     @Autowired
     private UserServiceInterface userService;
 
+    /**
+     * Service interface for User operations.
+     */
     private UserDto userDto;
+
+    /**
+     * User entity.
+     */
     private User user;
 
-
+    /**
+     * Sets up the test environment before each test.
+     */
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
@@ -51,7 +75,9 @@ class UserControllerIntegrationTest {
         user = UsersHelper.createUsersEntity();
     }
 
-
+    /**
+     * Tests the creation of a valid user.
+     */
     @Test
     void testCreateUserValid() {
         ResponseEntity<User> response = restTemplate.postForEntity("/users/create", userDto, User.class);
@@ -61,6 +87,12 @@ class UserControllerIntegrationTest {
         assertNotNull(response.getBody().getId());
     }
 
+    /**
+     * Tests the creation of a user with missing fields.
+     *
+     * @param fieldName   the name of the field that is missing
+     * @param invalidValue the invalid value for the field
+     */
     @ParameterizedTest
     @CsvSource({
             "firstName,",
@@ -86,6 +118,9 @@ class UserControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests the creation of a user with an email that already exists.
+     */
     @Test
     void testCreateUserEmailAlreadyExists() {
         User existingUser = userRepository.save(user);
@@ -96,6 +131,9 @@ class UserControllerIntegrationTest {
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 
+    /**
+     * Tests the creation of a user with a login that already exists.
+     */
     @Test
     void testCreateUserLoginAlreadyExists() {
         User existingUser = userRepository.save(user);
@@ -106,6 +144,9 @@ class UserControllerIntegrationTest {
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 
+    /**
+     * Tests retrieving all users successfully.
+     */
     @Test
     void testGetAllUsersSuccess() {
         user.setLogin("Login");
@@ -125,6 +166,9 @@ class UserControllerIntegrationTest {
         assertTrue(response.getBody().stream().anyMatch(u -> u.getId().equals(user2.getId())));
     }
 
+    /**
+     * Tests retrieving all users when the list is empty.
+     */
     @Test
     void testGetAllUsersEmptyList() {
         ResponseEntity<List<User>> response = restTemplate.exchange("/users", HttpMethod.GET, null, new ParameterizedTypeReference<>() {
@@ -136,6 +180,9 @@ class UserControllerIntegrationTest {
         assertTrue(response.getBody().isEmpty());
     }
 
+    /**
+     * Tests retrieving a user by ID successfully.
+     */
     @Test
     void testGetUserByIdSuccess() {
         User userExist = userRepository.save(this.user);
@@ -149,12 +196,18 @@ class UserControllerIntegrationTest {
         assertEquals(userExist.getLastName(), response.getBody().getLastName());
     }
 
+    /**
+     * Tests retrieving a user by a non-existing ID.
+     */
     @Test
     void testGetUserByIdNonExisting() {
         ResponseEntity<String> response = restTemplate.getForEntity("/users/999", String.class);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests deleting a user by ID successfully.
+     */
     @Test
     void testDeleteUserByIdSuccess() {
         User newUser = userRepository.save(this.user);
@@ -164,6 +217,9 @@ class UserControllerIntegrationTest {
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
     }
 
+    /**
+     * Tests deleting a user by a non-existing ID.
+     */
     @Test
     void testDeleteUserByIdNonExisting() {
         ResponseEntity<String> response = restTemplate.exchange("/users/999", HttpMethod.DELETE, null, String.class);
@@ -171,6 +227,9 @@ class UserControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests updating a user.
+     */
     @Test
     void testUpdateUser() {
         User existingUser = userRepository.save(user);
@@ -197,6 +256,9 @@ class UserControllerIntegrationTest {
         assertEquals("123456789", updateResponse.getBody().getPhone());
     }
 
+    /**
+     * Tests updating a user with a login that already exists.
+     */
     @Test
     void testUpdateUserLoginAlreadyExists() {
         User existingUser1 = userRepository.save(user);
@@ -217,6 +279,9 @@ class UserControllerIntegrationTest {
         );
     }
 
+    /**
+     * Tests updating a user with non-existing cars.
+     */
     @Test
     void testUpdateUserCarsNonExistingCar() {
         User newUser = userRepository.save(this.user);
@@ -228,6 +293,9 @@ class UserControllerIntegrationTest {
         assertEquals(1, updatedUser.getCars().size());
     }
 
+    /**
+     * Tests updating a user with duplicate license plates for cars.
+     */
     @Test
     void testUpdateUserCarsDuplicateLicensePlate() {
         User newUser = userRepository.save(this.user);
@@ -242,7 +310,12 @@ class UserControllerIntegrationTest {
         assertEquals(1, updatedUser.getCars().size());
     }
 
-
+    /**
+     * Creates an HttpEntity with JSON content type.
+     *
+     * @param userDto the UserDto to be included in the entity
+     * @return the HttpEntity with JSON content type
+     */
     private HttpEntity<UserDto> createJsonEntity(UserDto userDto) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

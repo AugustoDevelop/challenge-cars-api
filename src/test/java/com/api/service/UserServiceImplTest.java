@@ -22,21 +22,42 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the UserServiceImpl class.
+ */
 @SpringBootTest
 class UserServiceImplTest {
-
+    /**
+     * The UserServiceImpl instance used for testing.
+     */
     @Autowired
     private UserServiceImpl userService;
 
+    /**
+     * The UserRepository instance used for testing.
+     */
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * The CarRepository instance used for testing.
+     */
     @Autowired
     private CarRepository carRepository;
 
+    /**
+     * The User entity used in tests.
+     */
     private User user;
+
+    /**
+     * The UserDto used in tests.
+     */
     private UserDto userDto;
 
+    /**
+     * Sets up the test environment before each test.
+     */
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
@@ -45,18 +66,27 @@ class UserServiceImplTest {
         userDto = UserDtoHelper.createUserDto();
     }
 
+    /**
+     * Tests creating a valid user.
+     */
     @Test
     void testCreateUserValid() {
         User userExist = userService.createUser(userDto);
         assertNotNull(userExist);
     }
 
+    /**
+     * Tests creating a user with missing fields.
+     */
     @Test
     void testCreateUserMissingFields() {
         UserDto userDtoInvalid = UserDtoHelper.createUserDtoInvalid();
         assertThrows(MissingFieldsException.class, () -> userService.createUser(userDtoInvalid));
     }
 
+    /**
+     * Tests creating a user with combinatorial analysis of missing fields.
+     */
     @Test
     void testCreateUserCombinatorialAnalysis() {
         List<String> fields = List.of("firstName", "lastName", "birthday", "password", "phone");
@@ -68,7 +98,9 @@ class UserServiceImplTest {
         }
     }
 
-
+    /**
+     * Tests creating a user when the email already exists.
+     */
     @Test
     void testCreateUserEmailAlreadyExists() {
         User existingUser = userRepository.save(user);
@@ -77,6 +109,9 @@ class UserServiceImplTest {
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
     }
 
+    /**
+     * Tests creating a user when the login already exists.
+     */
     @Test
     void testCreateUserLoginAlreadyExists() {
         User existingUser = userRepository.save(user);
@@ -85,7 +120,9 @@ class UserServiceImplTest {
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
     }
 
-
+    /**
+     * Tests retrieving an existing user by ID.
+     */
     @Test
     @Transactional
     void testGetUserByIdExisting() {
@@ -98,11 +135,17 @@ class UserServiceImplTest {
         assertFalse(foundUser.getCars().isEmpty());
     }
 
+    /**
+     * Tests retrieving a non-existing user by ID.
+     */
     @Test
     void testGetUserByIdNonExisting() {
         assertThrows(ResourceNotFoundException.class, () -> userService.getUserById(999L));
     }
 
+    /**
+     * Tests deleting an existing user by ID.
+     */
     @Test
     void testDeleteUserByIdSuccess() {
         User userExist = userRepository.save(this.user);
@@ -110,11 +153,17 @@ class UserServiceImplTest {
         assertFalse(userRepository.findByIdAndStatus(userExist.getId(), UserStatus.ACTIVE).isPresent());
     }
 
+    /**
+     * Tests deleting a non-existing user by ID.
+     */
     @Test
     void testDeleteUserByIdNonExisting() {
         assertThrows(ResourceNotFoundException.class, () -> userService.deleteUserById(999L));
     }
 
+    /**
+     * Tests updating an existing user successfully.
+     */
     @Test
     void testUpdateUserSuccess() {
         User newUser = userRepository.save(this.user);
@@ -128,11 +177,17 @@ class UserServiceImplTest {
         assertEquals("Update last name", updatedUser.getLastName());
     }
 
+    /**
+     * Tests updating a non-existing user.
+     */
     @Test
     void testUpdateUserNonExisting() {
         assertThrows(ResourceNotFoundException.class, () -> userService.updateUser(999L, userDto));
     }
 
+    /**
+     * Tests updating a user when the email already exists.
+     */
     @Test
     void testUpdateUserEmailAlreadyExists() {
         User existingUser1 = userRepository.save(user);
@@ -153,6 +208,14 @@ class UserServiceImplTest {
         );
     }
 
+    /**
+     * Creates a test UserDto with specified fields cleared based on the mask.
+     *
+     * @param baseUserDto the base UserDto
+     * @param fields the list of fields
+     * @param mask the mask indicating which fields to clear
+     * @return the test UserDto
+     */
     private UserDto createTestUserDto(UserDto baseUserDto, List<String> fields, int mask) {
         UserDto testDto = new UserDto();
         testDto.setEmail(baseUserDto.getEmail());
@@ -169,6 +232,12 @@ class UserServiceImplTest {
         return testDto;
     }
 
+    /**
+     * Clears the specified field in the UserDto.
+     *
+     * @param testDto the UserDto to modify
+     * @param fieldName the name of the field to clear
+     */
     private void clearField(UserDto testDto, String fieldName) {
         switch (fieldName) {
             case "firstName" -> testDto.setFirstName("");
@@ -180,6 +249,13 @@ class UserServiceImplTest {
         }
     }
 
+    /**
+     * Sets the specified field in the UserDto to a valid value.
+     *
+     * @param testDto the UserDto to modify
+     * @param baseUserDto the base UserDto
+     * @param fieldName the name of the field to set
+     */
     private void setValidField(UserDto testDto, UserDto baseUserDto, String fieldName) {
         switch (fieldName) {
             case "firstName" -> testDto.setFirstName(baseUserDto.getFirstName());

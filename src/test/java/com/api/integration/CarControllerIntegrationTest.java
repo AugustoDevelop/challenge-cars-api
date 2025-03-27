@@ -17,18 +17,37 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests for the CarController.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CarControllerIntegrationTest {
 
+    /**
+     * TestRestTemplate for making HTTP requests in tests.
+     */
     @Autowired
     private TestRestTemplate restTemplate;
 
+    /**
+     * Repository for managing Car entities.
+     */
     @Autowired
     private CarRepository carRepository;
 
+    /**
+     * Data Transfer Object for Car.
+     */
     private CarDto carDto;
+
+    /**
+     * Car entity.
+     */
     private Car car;
 
+    /**
+     * Sets up the test environment before each test.
+     */
     @BeforeEach
     void setup() {
         carRepository.deleteAll();
@@ -36,6 +55,9 @@ class CarControllerIntegrationTest {
         car = CarHelper.createCar();
     }
 
+    /**
+     * Tests the creation of a car successfully.
+     */
     @Test
     void testCreateCarSuccess() {
         ResponseEntity<Car> response = restTemplate.postForEntity("/cars/create", carDto, Car.class);
@@ -46,6 +68,9 @@ class CarControllerIntegrationTest {
         assertNotNull(response.getBody().getId());
     }
 
+    /**
+     * Tests the creation of a car with missing fields.
+     */
     @Test
     void testCreateCarMissingFields() {
         ResponseEntity<String> response = restTemplate.postForEntity("/cars/create", CarDtoHelper.createCarDtoInvalid(), String.class);
@@ -53,6 +78,9 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests the creation of a car with a license plate that already exists.
+     */
     @Test
     void testCreateCarLicensePlateAlreadyExists() {
         Car existingCar = carRepository.save(car);
@@ -63,6 +91,9 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests retrieving all cars successfully.
+     */
     @Test
     void testGetAllCarsSuccess() {
         car.setLicensePlate("NEW");
@@ -81,6 +112,9 @@ class CarControllerIntegrationTest {
         assertTrue(response.getBody().stream().anyMatch(c -> c.getId().equals(car2.getId())));
     }
 
+    /**
+     * Tests retrieving all cars when the list is empty.
+     */
     @Test
     void testGetAllCarsEmptyList() {
         carRepository.deleteAll();
@@ -94,6 +128,9 @@ class CarControllerIntegrationTest {
         assertTrue(response.getBody().isEmpty());
     }
 
+    /**
+     * Tests retrieving a car by ID successfully.
+     */
     @Test
     void testGetCarByIdSuccess() {
         Car newCar = carRepository.save(car);
@@ -107,6 +144,9 @@ class CarControllerIntegrationTest {
         assertEquals(newCar.getLicensePlate(), response.getBody().getLicensePlate());
     }
 
+    /**
+     * Tests retrieving a car by a non-existing ID.
+     */
     @Test
     void testGetCarByIdNonExisting() {
         ResponseEntity<String> response = restTemplate.getForEntity("/cars/999", String.class);
@@ -114,6 +154,9 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests deleting a car by ID successfully.
+     */
     @Test
     void testDeleteCarByIdSuccess() {
         Car newCar = carRepository.save(car);
@@ -123,6 +166,9 @@ class CarControllerIntegrationTest {
         assertFalse(carRepository.existsById(newCar.getId()));
     }
 
+    /**
+     * Tests deleting a car by a non-existing ID.
+     */
     @Test
     void testDeleteCarByIdNonExisting() {
         ResponseEntity<String> response = restTemplate.exchange("/cars/999", HttpMethod.DELETE, null, String.class);
@@ -130,6 +176,9 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests updating a car successfully.
+     */
     @Test
     void testUpdateCarSuccess() {
         Car newCar = carRepository.save(car);
@@ -150,6 +199,9 @@ class CarControllerIntegrationTest {
         assertEquals(carDto.getColor(), response.getBody().getColor());
     }
 
+    /**
+     * Tests updating a car with an invalid license plate.
+     */
     @Test
     void testUpdateCarInvalidLicensePlate() {
         Car newCar = carRepository.save(car);
@@ -161,6 +213,9 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Tests updating a car with an existing license plate.
+     */
     @Test
     void testUpdateCarExistingLicensePlate() {
         car.setLicensePlate("PLACA EXISTE");
@@ -177,6 +232,9 @@ class CarControllerIntegrationTest {
         assertNotNull(response.getBody());
     }
 
+    /**
+     * Tests updating a car with optional fields.
+     */
     @Test
     void testUpdateCarOptionalFields() {
         Car newCar = carRepository.save(car);
@@ -193,6 +251,9 @@ class CarControllerIntegrationTest {
         assertEquals(carDto.getColor(), response.getBody().getColor());
     }
 
+    /**
+     * Tests partially updating a car.
+     */
     @Test
     void testUpdateCarPartialUpdate() {
         Car newCar = carRepository.save(CarHelper.createCar());
@@ -205,6 +266,9 @@ class CarControllerIntegrationTest {
         assertEquals(carDto.getYear(), response.getBody().getYear());
     }
 
+    /**
+     * Tests updating a car with null values.
+     */
     @Test
     void testUpdateCarNullValues() {
         Car newCar = carRepository.save(car);
@@ -215,6 +279,12 @@ class CarControllerIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
+    /**
+     * Creates an HttpEntity with JSON content type.
+     *
+     * @param carDto the CarDto to be included in the entity
+     * @return the HttpEntity with JSON content type
+     */
     private HttpEntity<CarDto> createJsonEntity(CarDto carDto) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
