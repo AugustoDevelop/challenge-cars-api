@@ -1,36 +1,42 @@
 package com.api.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
+/**
+ * Entity representing a car.
+ */
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "car")
+@Table(name = "CARS")
 public class Car {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "`year`")
+    @Column(name = "`YEAR`")
     private Integer year;
 
-    @Column(name = "license_plate", unique = true)
+    @Column(name = "LICENSE_PLATE", unique = true)
     private String licensePlate;
 
-    @Column(name = "model")
+    @Column(name = "MODEL")
     private String model;
 
     @Column(name = "color")
     private String color;
 
-    @ManyToMany(mappedBy = "cars")
-    @JsonIgnore
-    private List<Users> users;
+    @Column(name = "USAGE_AMOUNT")
+    private Integer usageAmount = 0;
+
+    @Column(name = "PHOTO_URL")
+    private String photoUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "users_id")
+    private User user;
 }

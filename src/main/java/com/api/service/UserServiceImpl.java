@@ -1,177 +1,144 @@
 package com.api.service;
 
 import com.api.dto.UserDto;
-import com.api.entity.Car;
-import com.api.entity.Users;
+import com.api.entity.User;
 import com.api.exception.DuplicateResourceException;
+import com.api.exception.InvalidFieldsException;
 import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.UserServiceInterface;
-import com.api.repository.CarRepository;
 import com.api.repository.UserRepository;
 import com.api.util.ErrorMessages;
+import com.api.util.UserStatus;
+import com.api.util.mapper.UserMapper;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
-@Service
-@AllArgsConstructor
-public class UserServiceImpl implements UserServiceInterface {
-    private final UserRepository userRepository;
-    private final CarRepository carRepository;
+    /**
+     * Service implementation for managing users.
+     */
+    @Service
+    @AllArgsConstructor
+    public class UserServiceImpl implements UserServiceInterface {
+        private final UserValidationService userValidationService;
+        private final CarSortingService carSortingService;
+        private final UserRepository userRepository;
+        private final ModelMapper modelMapper;
+        private final UserMapper userMapper;
 
-    // para evitar código repetitivo, estou usando essa lib (ModelMapper)
-    // para copiar as propriedades do DTO para a entidade
-    private final ModelMapper modelMapper;
-
-    public Users createUser(UserDto userDto) {
-
-        if (userDto.getFirstName().isBlank() ||
-            userDto.getLastName().isBlank() ||
-            userDto.getBirthday().isBlank() ||
-            userDto.getPassword().isBlank() ||
-            userDto.getPhone().isBlank()
-        ) {
-            throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
+        /**
+         * Creates a new user.
+         *
+         * @param userDto the user data transfer object
+         * @return the created user
+         * @throws MissingFieldsException     if any required fields are missing
+         * @throws DuplicateResourceException if the email or login already exists
+         */
+        public User createUser(UserDto userDto) {
+            userValidationService.validateUserDto(userDto);
+            User user = userMapper.mapUserDtoToUser(userDto);
+            return userRepository.save(user);
         }
 
-        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
-            throw new DuplicateResourceException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+        /**
+         * Retrieves all active users and sorts their cars by usage amount in descending order.
+         *
+         * @return a list of active users with their cars sorted by usage amount
+         */
+        @Override
+        public List<User> getAllUsers() {
+            List<User> users = userRepository.findByStatus(UserStatus.ACTIVE);
+            users.forEach(carSortingService::sortCarsByUsageAmount);
+            return users;
         }
 
-        if (userRepository.findByLogin(userDto.getLogin()).isPresent()) {
-            throw new DuplicateResourceException(ErrorMessages.LOGIN_ALREADY_EXISTS);
+        /**
+         * Retrieves a user by ID and sorts their cars by usage amount in descending order.
+         *
+         * @param id the user ID
+         * @return the user with their cars sorted by usage amount
+         * @throws ResourceNotFoundException if the user is not found
+         */
+        @Override
+        public User getUserById(Long id) {
+            User user = userRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
+            carSortingService.sortCarsByUsageAmount(user);
+            return user;
         }
 
-        Users users = mapUserDtoToUser(userDto);
-        return userRepository.save(users);
-    }
-
-    public List<Users> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    public Users getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
-    }
-
-    public void deleteUserById(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
-        }
-        userRepository.deleteById(id);
-    }
-
-    public Users updateUser(Long id, UserDto userUpdates) {
-        Users users = modelMapper.map(userUpdates, Users.class);
-        Users existingUsers = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
-
-        validateEmailAndLogin(existingUsers, users);
-
-        existingUsers.setFirstName(userUpdates.getFirstName());
-        existingUsers.setLastName(userUpdates.getLastName());
-        existingUsers.setBirthday(userUpdates.getBirthday());
-        existingUsers.setLogin(userUpdates.getLogin());
-        existingUsers.setPassword(userUpdates.getPassword());
-        existingUsers.setEmail(userUpdates.getEmail());
-        existingUsers.setPhone(userUpdates.getPhone());
-
-        if (userUpdates.getCars() != null) {
-            updateCars(existingUsers, userUpdates.getCars());
+        /**
+         * Deletes a user by ID (logical delete).
+         *
+         * @param id the user ID
+         * @throws ResourceNotFoundException if the user is not found
+         */
+        public void deleteUserById(Long id) {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
+            user.setStatus(UserStatus.INACTIVE);
+            userRepository.save(user);
         }
 
-        return userRepository.save(existingUsers);
-    }
-
-    private Users mapUserDtoToUser(UserDto userDto) {
-        Users users = new Users();
-        users.setFirstName(userDto.getFirstName());
-        users.setLastName(userDto.getLastName());
-        users.setBirthday(userDto.getBirthday());
-        users.setLogin(userDto.getLogin());
-        users.setPassword(userDto.getPassword());
-        users.setEmail(userDto.getEmail());
-        users.setPhone(userDto.getPhone());
-
-        if (userDto.getCars() != null) {
-            List<Car> cars = userDto.getCars().stream()
-                .map(carDto -> {
-                    Car existingCar = carRepository.findByLicensePlate(carDto.getLicensePlate())
-                            .orElse(null);
-
-                    if (existingCar != null) {
-                        return existingCar;
-                    } else {
-                        // Se não existir, crie um novo carro
-                        Car newCar = new Car();
-                        newCar.setYear(carDto.getYear());
-                        newCar.setLicensePlate(carDto.getLicensePlate());
-                        newCar.setModel(carDto.getModel());
-                        newCar.setColor(carDto.getColor());
-                        return newCar;
-                    }
-                })
-                .toList();
-
-            // Salve os carros que ainda não estão no banco
-            List<Car> savedCars = cars.stream()
-                    .filter(car -> car.getId() == null) // Filtra carros novos
-                    .map(carRepository::save)
-                    .toList();
-
-            users.setCars(savedCars);
+        /**
+         * Uploads a photo for the user.
+         *
+         * @param userId the user ID
+         * @param file   the photo file
+         * @throws ResourceNotFoundException if the user is not found
+         * @throws InvalidFieldsException    if the photo upload fails
+         */
+        public void uploadUserPhoto(Long userId, MultipartFile file) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
+            try {
+                byte[] bytes = file.getBytes();
+                Path path = Paths.get("uploads", "users", String.valueOf(userId), file.getOriginalFilename());
+                Files.createDirectories(path.getParent());
+                Files.write(path, bytes);
+                user.setPhotoUrl(path.toString());
+                userRepository.save(user);
+            } catch (IOException e) {
+                throw new InvalidFieldsException(ErrorMessages.INVALID_PHOTO);
+            }
         }
 
-        return users;
-    }
+        /**
+         * Updates a user.
+         *
+         * @param id          the user ID
+         * @param userUpdates the user data transfer object with updates
+         * @return the updated user
+         * @throws ResourceNotFoundException  if the user is not found
+         * @throws DuplicateResourceException if the email or login already exists
+         */
+        public User updateUser(Long id, UserDto userUpdates) {
+            User user = modelMapper.map(userUpdates, User.class);
+            User existingUser = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
 
-    private void updateCars(Users existingUsers, List<Car> carsUpdates) {
-        existingUsers.setCars(new ArrayList<>());
-        for (Car carUpdate : carsUpdates) {
-            Car existingCar;
+            userValidationService.validateEmailAndLogin(existingUser, user);
 
-            if (carUpdate.getLicensePlate() == null) {
-                throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
-            } else {
-                Optional<Car> optionalCar = carRepository.findByLicensePlate(carUpdate.getLicensePlate());
-                existingCar = optionalCar.orElseGet(Car::new);
+            existingUser.setFirstName(userUpdates.getFirstName());
+            existingUser.setLastName(userUpdates.getLastName());
+            existingUser.setBirthday(userUpdates.getBirthday());
+            existingUser.setLogin(userUpdates.getLogin());
+            existingUser.setPassword(userUpdates.getPassword());
+            existingUser.setEmail(userUpdates.getEmail());
+            existingUser.setPhone(userUpdates.getPhone());
+
+            if (userUpdates.getCars() != null) {
+                userValidationService.updateCars(existingUser, userUpdates.getCars());
             }
 
-            existingCar.setYear(carUpdate.getYear());
-            existingCar.setLicensePlate(carUpdate.getLicensePlate());
-            existingCar.setModel(carUpdate.getModel());
-            existingCar.setColor(carUpdate.getColor());
-
-            Car savedCar = carRepository.save(existingCar);
-
-            existingUsers.getCars().add(savedCar);
+            return userRepository.save(existingUser);
         }
     }
-
-
-    private void validateEmailAndLogin(Users existingUsers, Users usersUpdates) {
-        if (
-                usersUpdates.getEmail() != null &&
-                !usersUpdates.getEmail().equals(existingUsers.getEmail()) &&
-                userRepository.findByEmail(usersUpdates.getEmail()).isPresent()
-        ) {
-            throw new DuplicateResourceException(ErrorMessages.EMAIL_ALREADY_EXISTS);
-        }
-
-
-        if (
-                usersUpdates.getLogin() != null &&
-                !usersUpdates.getLogin().equals(existingUsers.getLogin()) &&
-                userRepository.findByLogin(usersUpdates.getLogin()).isPresent()
-        ) {
-            throw new DuplicateResourceException(ErrorMessages.LOGIN_ALREADY_EXISTS);
-        }
-
-    }
-}

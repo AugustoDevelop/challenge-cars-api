@@ -13,6 +13,9 @@ target/
 .springBeans
 .sts4-cache
 
+# Ignore Javadoc documentation
+docs/javadocs/
+
 ### IntelliJ IDEA ###
 .idea
 *.iws

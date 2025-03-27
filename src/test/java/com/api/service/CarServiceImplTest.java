@@ -21,27 +21,52 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Integration tests for the CarServiceImpl.
+ */
 @ExtendWith(MockitoExtension.class)
 class CarServiceImplTest {
 
+    /**
+     * Mocked CarRepository for testing.
+     */
     @Mock
     private CarRepository carRepository;
 
+    /**
+     * Mocked ModelMapper for testing.
+     */
     @Mock
     private ModelMapper modelMapper;
 
+    /**
+     * Injected instance of CarServiceImpl for testing.
+     */
     @InjectMocks
     private CarServiceImpl carService;
 
+    /**
+     * Car entity used in tests.
+     */
     private Car car;
+
+    /**
+     * Data Transfer Object for Car used in tests.
+     */
     private CarDto carDto;
 
+    /**
+     * Sets up the test environment before each test.
+     */
     @BeforeEach
     void setUp() {
         car = CarHelper.createCar();
         carDto = CarDtoHelper.createCarDto();
     }
 
+    /**
+     * Tests the successful creation of a car.
+     */
     @Test
     void testCreateCarSuccess() {
         when(modelMapper.map(any(CarDto.class), eq(Car.class))).thenReturn(car);
@@ -54,7 +79,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).save(any(Car.class));
     }
 
-
+    /**
+     * Tests retrieving all cars.
+     */
     @Test
     void testGetAllCars() {
         List<Car> cars = List.of(new Car(), new Car());
@@ -67,6 +94,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).findAll();
     }
 
+    /**
+     * Tests retrieving a car by ID successfully.
+     */
     @Test
     void testGetCarByIdSuccess() {
         when(carRepository.findById(anyLong())).thenReturn(Optional.of(car));
@@ -77,6 +107,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).findById(anyLong());
     }
 
+    /**
+     * Tests retrieving a car by a non-existing ID.
+     */
     @Test
     void testGetCarByIdNonExisting() {
         when(carRepository.findById(anyLong())).thenReturn(Optional.empty());
@@ -85,6 +118,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).findById(anyLong());
     }
 
+    /**
+     * Tests the successful update of a car.
+     */
     @Test
     void testUpdateCarSuccess() {
         Car existingCar = new Car();
@@ -104,6 +140,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).save(any(Car.class));
     }
 
+    /**
+     * Tests updating a car with a non-existing license plate.
+     */
     @Test
     void testUpdateCarNonExisting() {
         when(carRepository.findByLicensePlate(anyString())).thenReturn(Optional.empty());
@@ -112,7 +151,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).findByLicensePlate(anyString());
     }
 
-
+    /**
+     * Tests the successful deletion of a car by ID.
+     */
     @Test
     void testDeleteCarSuccess() {
         when(carRepository.existsById(anyLong())).thenReturn(true);
@@ -121,6 +162,9 @@ class CarServiceImplTest {
         verify(carRepository, times(1)).deleteById(anyLong());
     }
 
+    /**
+     * Tests deleting a car by a non-existing ID.
+     */
     @Test
     void testDeleteCarNonExisting() {
         when(carRepository.existsById(anyLong())).thenReturn(false);
