@@ -27,6 +27,14 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <jwt.version>0.12.6</jwt.version>
+
+        <sonar.coverage.exclusions>
+            **/interfaces/*,
+            **/config/*,
+            **/entity/*,
+            **/enums/*,
+            **/dto/*,
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -150,6 +158,15 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>**/interfaces/*</exclude>
+                        <exclude>**/config/*</exclude>
+                        <exclude>**/entity/*</exclude>
+                        <exclude>**/enums/*</exclude>
+                        <exclude>**/dto/*</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <!-- Spring Boot Maven Plugin -->
