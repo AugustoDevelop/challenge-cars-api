@@ -18,7 +18,7 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "YEAR")
+    @Column(name = "`YEAR`")
     private Integer year;
 
     @Column(name = "LICENSE_PLATE", unique = true)
@@ -37,6 +37,6 @@ public class Car {
     private String photoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USERS_ID")
+    @JoinColumn(name = "users_id")
     private User user;
 }
