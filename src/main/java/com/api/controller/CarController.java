@@ -7,7 +7,6 @@ import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.CarServiceInterface;
 import com.api.util.openapi.CarControllerOpenApi;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(value = "/api/cars")
-@AllArgsConstructor
 public class CarController implements CarControllerOpenApi {
 
     /**
