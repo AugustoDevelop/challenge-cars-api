@@ -1,6 +1,5 @@
 package com.api.controller;
 
-import com.api.config.SecurityConfigurations;
 import com.api.config.TokenService;
 import com.api.dto.AuthenticationDTO;
 import com.api.dto.LoginResponseDTO;
@@ -13,7 +12,6 @@ import com.api.interfaces.UserServiceInterface;
 import com.api.repository.UserRepository;
 import com.api.util.ErrorMessages;
 import com.api.util.openapi.UserControllerOpenApi;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -36,7 +34,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(value = "/api")
-@SecurityRequirement(name = SecurityConfigurations.SECURITY)
 @RequiredArgsConstructor
 public class UserController implements UserControllerOpenApi {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
