@@ -7,7 +7,7 @@ RESTful API for managing users and cars, with JWT authentication, developed in J
 - [User Stories](#user-stories)
 - [Solution](#solution)
 - [Requirements](#requirements)
-- [How to Run](#how-to-run)
+- [How to Run](#compiling-and-running-with-maven)
 - [API Endpoints](#api-endpoints)
 - [Running Tests](#running-tests)
 - [API Documentation](#api-documentation)
@@ -113,8 +113,7 @@ Make sure the following items are installed and configured on your system:
 ### Compiling and Running with Maven
 
 ```bash
-  mvn clean install
-  mvn spring-boot:run
+  mvn clean install && mvn spring-boot:run
 ```
 
 ### Running with the JAR
@@ -218,7 +217,7 @@ The coverage report will be available at `target/site/jacoco/index.html`
 The API documentation is available at the following URL:
 
 ```
-   ec2-52-73-230-3.compute-1.amazonaws.com/swagger-ui/index.html
+   http://ec2-52-73-230-3.compute-1.amazonaws.com:8080/swagger-ui/index.html
 ```
 
 ## Deployment

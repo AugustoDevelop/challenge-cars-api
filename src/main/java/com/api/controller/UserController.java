@@ -16,6 +16,8 @@ import com.api.util.openapi.UserControllerOpenApi;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +39,7 @@ import java.util.List;
 @SecurityRequirement(name = SecurityConfigurations.SECURITY)
 @RequiredArgsConstructor
 public class UserController implements UserControllerOpenApi {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
@@ -70,12 +72,13 @@ public class UserController implements UserControllerOpenApi {
      * @param userDto the user data transfer object
      * @return HTTP 201 Created with persisted user details
      */
-    @PostMapping("/users/create")
+    @PostMapping("/users")
     public ResponseEntity<UserResponseDto> createUser(@RequestBody @Valid UserDto userDto) {
+        logger.info("Received request to create user with login: {}", userDto.login());
         UserResponseDto createdUser = userService.createUser(userDto);
+        logger.info("User created successfully with Login: {}", createdUser.login());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
-
     /**
      * Retrieves all users.
      *
@@ -83,7 +86,9 @@ public class UserController implements UserControllerOpenApi {
      */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
+        logger.info("Received request to retrieve all users");
         List<UserResponseDto> users = userService.getAllUsers();
+        logger.info("Retrieved {} users", users.size());
         return ResponseEntity.ok(users);
     }
 
@@ -96,10 +101,11 @@ public class UserController implements UserControllerOpenApi {
      */
     @GetMapping("/users/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
+        logger.info("Received request to retrieve user with ID: {}", id);
         UserResponseDto user = userService.getUserById(id);
+        logger.info("User retrieved successfully with ID: {}", id);
         return ResponseEntity.ok(user);
     }
-
     /**
      * Deletes a user by its unique identifier.
      *
@@ -108,7 +114,9 @@ public class UserController implements UserControllerOpenApi {
      */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteUserById(@PathVariable Long id) {
+        logger.info("Received request to delete user with ID: {}", id);
         userService.deleteUserById(id);
+        logger.info("User deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -121,7 +129,9 @@ public class UserController implements UserControllerOpenApi {
      */
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @RequestBody @Valid UserDto userDto) {
+        logger.info("Received request to update user with ID: {}", id);
         UserResponseDto updatedUser = userService.updateUser(id, userDto);
+        logger.info("User updated successfully with ID: {}", id);
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -136,7 +146,9 @@ public class UserController implements UserControllerOpenApi {
      */
     @PostMapping("/users/{id}/upload-photo")
     public ResponseEntity<UserResponseDto> uploadUserPhoto(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        logger.info("Received request to upload photo for user with ID: {}", id);
         UserResponseDto response = userService.uploadUserPhoto(id, file);
+        logger.info("Photo uploaded successfully for user with ID: {}", id);
         return ResponseEntity.ok(response);
     }
 
@@ -149,11 +161,14 @@ public class UserController implements UserControllerOpenApi {
      */
     @PostMapping("/singin")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO body) {
+        logger.info("Received login request for user with login: {}", body.login());
         User user = this.repository.findByLogin(body.login()).orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_LOGIN_OR_PASSWORD));
         if (passwordEncoder.matches(body.password(), user.getPassword())) {
             String token = this.tokenService.generateToken(user);
+            logger.info("User authenticated successfully with login: {}", body.login());
             return ResponseEntity.ok(new LoginResponseDTO(token));
         }
+        logger.warn("Failed login attempt for user with login: {}", body.login());
         return ResponseEntity.badRequest().build();
     }
 
