@@ -2,6 +2,8 @@
 
 RESTful API for managing users and cars, with JWT authentication, developed in Java 8 and Spring Boot.
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AugustoDevelop_challenge-cars-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AugustoDevelop_challenge-cars-api)  [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=AugustoDevelop_challenge-cars-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=AugustoDevelop_challenge-cars-api)
+
 ## Index
 
 - [User Stories](#user-stories)
