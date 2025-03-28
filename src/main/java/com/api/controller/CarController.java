@@ -7,6 +7,8 @@ import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.CarServiceInterface;
 import com.api.util.openapi.CarControllerOpenApi;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,10 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/cars")
 public class CarController implements CarControllerOpenApi {
+    /**
+     * Logger for this class
+     */
+    private static final Logger logger = LoggerFactory.getLogger(CarController.class);
 
     /**
      * Service layer for handling car-related business logic
@@ -53,7 +59,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @PostMapping
     public ResponseEntity<Car> createCar(@RequestBody @Valid CarDto carDto) {
+        logger.info("Received request to create car with license plate: {}", carDto.licensePlate());
         Car createdCar = carService.createCar(carDto);
+        logger.info("Car created successfully with ID: {}", createdCar.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCar);
     }
 
@@ -64,7 +72,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @GetMapping
     public ResponseEntity<List<Car>> getAllCars() {
+        logger.info("Received request to retrieve all cars");
         List<Car> cars = carService.getAllCars();
+        logger.info("Retrieved {} cars", cars.size());
         return ResponseEntity.ok(cars);
     }
 
@@ -77,7 +87,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @GetMapping("/{id}")
     public ResponseEntity<Car> getCarById(@PathVariable Long id) {
+        logger.info("Received request to retrieve car with ID: {}", id);
         Car car = carService.getCarById(id);
+        logger.info("Car retrieved successfully with ID: {}", id);
         return ResponseEntity.ok(car);
     }
 
@@ -90,7 +102,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody @Valid CarDto carDto) {
+        logger.info("Received request to update car with ID: {}", id);
         Car updatedCar = carService.updateCar(id, carDto);
+        logger.info("Car updated successfully with ID: {}", id);
         return ResponseEntity.ok(updatedCar);
     }
 
@@ -102,7 +116,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCarById(@PathVariable Long id) {
+        logger.info("Received request to delete car with ID: {}", id);
         carService.deleteCar(id);
+        logger.info("Car deleted successfully with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -117,7 +133,9 @@ public class CarController implements CarControllerOpenApi {
      */
     @PostMapping("/{carId}/upload-photo")
     public ResponseEntity<String> uploadCarPhoto(@PathVariable Long carId, @RequestParam("file") MultipartFile file) {
+        logger.info("Received request to upload photo for car with ID: {}", carId);
         carService.uploadCarPhoto(carId, file);
+        logger.info("Photo uploaded successfully for car with ID: {}", carId);
         return ResponseEntity.ok("Car photo uploaded successfully");
     }
 }

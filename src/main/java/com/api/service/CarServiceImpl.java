@@ -11,6 +11,8 @@ import com.api.interfaces.CarServiceInterface;
 import com.api.repository.CarRepository;
 import com.api.util.ErrorMessages;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +33,7 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class CarServiceImpl implements CarServiceInterface {
-
+    private static final Logger logger = LoggerFactory.getLogger(CarServiceImpl.class);
     private final CarRepository carRepository;
     private final Map<Long, Integer> carUsageCount = new HashMap<>();
     private final TokenService tokenService;
@@ -44,13 +46,13 @@ public class CarServiceImpl implements CarServiceInterface {
      *
      */
     public Car createCar(CarDto carDto) {
+        logger.info("Creating car with license plate: {}", carDto.licensePlate());
         if (carDto.licensePlate().isBlank() || carDto.model().isBlank() || carDto.color().isBlank()) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
         }
         if (carRepository.findByLicensePlate(carDto.licensePlate()).isPresent()) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
         }
-
         User loggedUser = tokenService.getLoggedUser();
         Car car = new Car();
         car.setYear(carDto.year());
@@ -58,8 +60,9 @@ public class CarServiceImpl implements CarServiceInterface {
         car.setModel(carDto.model());
         car.setColor(carDto.color());
         car.setUser(loggedUser);
-
-        return carRepository.save(car);
+        Car createdCar = carRepository.save(car);
+        logger.info("Car created successfully with ID: {}", createdCar.getId());
+        return createdCar;
     }
 
     /**
@@ -68,8 +71,11 @@ public class CarServiceImpl implements CarServiceInterface {
      * @return a list of all Car entities
      */
     public List<Car> getAllCars() {
+        logger.info("Retrieving all cars");
         User loggedUser = tokenService.getLoggedUser();
-        return carRepository.findByUser_Login(loggedUser.getLogin());
+        List<Car> cars = carRepository.findByUser_Login(loggedUser.getLogin());
+        logger.info("Retrieved {} cars", cars.size());
+        return cars;
     }
     /**
      * Retrieves a car by its ID and increments its usage amount.
@@ -79,15 +85,14 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws ResourceNotFoundException if the car is not found
      */
     public Car getCarById(Long id) {
+        logger.info("Retrieving car with ID: {}", id);
         User loggedUser = tokenService.getLoggedUser();
         Car car = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         car.setUsageAmount(car.getUsageAmount() + 1);
         carRepository.save(car);
-
-        // Update usage count
         updateUsageCount(car);
-
+        logger.info("Car retrieved successfully with ID: {}", id);
         return car;
     }
 
@@ -101,6 +106,7 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws MissingFieldsException    if any required fields are missing
      */
     public Car updateCar(Long id, CarDto carDto) {
+        logger.info("Updating car with ID: {}", id);
         User loggedUser = tokenService.getLoggedUser();
         validateCars(carDto);
         Optional<Car> existingCar = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin());
@@ -110,7 +116,9 @@ public class CarServiceImpl implements CarServiceInterface {
             existingCar.get().setModel(carDto.model());
             existingCar.get().setColor(carDto.color());
             existingCar.get().setUser(loggedUser);
-            return carRepository.save(existingCar.get());
+            Car updatedCar = carRepository.save(existingCar.get());
+            logger.info("Car updated successfully with ID: {}", id);
+            return updatedCar;
         } else {
             throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
         }
@@ -123,10 +131,12 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws ResourceNotFoundException if the car is not found
      */
     public void deleteCar(Long id) {
+        logger.info("Deleting car with ID: {}", id);
         User loggedUser = tokenService.getLoggedUser();
         Car car = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         carRepository.delete(car);
+        logger.info("Car deleted successfully with ID: {}", id);
     }
 
     /**
@@ -138,18 +148,19 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws InvalidFieldsException    if the photo upload fails
      */
     public void uploadCarPhoto(Long carId, MultipartFile file) {
-
+        logger.info("Uploading photo for car with ID: {}", carId);
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         try {
             byte[] bytes = file.getBytes();
-            file.getOriginalFilename();
             Path path = Paths.get("uploads", "cars", String.valueOf(carId), file.getOriginalFilename());
             Files.createDirectories(path.getParent());
             Files.write(path, bytes);
             car.setPhotoCarUrl(path.toString());
             carRepository.save(car);
+            logger.info("Photo uploaded successfully for car with ID: {}", carId);
         } catch (IOException e) {
+            logger.error("Failed to upload photo for car with ID: {}", carId, e);
             throw new InvalidFieldsException(ErrorMessages.INVALID_PHOTO);
         }
     }

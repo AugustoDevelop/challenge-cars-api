@@ -34,9 +34,9 @@ public class ModelMapperConfig {
                 return new UserResponseDto(
                         user.getFirstName(),
                         user.getLastName(),
+                        user.getEmail(),
                         user.getBirthday(),
                         user.getLogin(),
-                        user.getEmail(),
                         user.getPhone(),
                         user.getCars().stream()
                                 .map(car -> new CarDto(
