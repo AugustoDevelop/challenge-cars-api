@@ -17,6 +17,8 @@ import com.api.util.UserStatus;
 import com.api.util.mapper.UserMapper;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,7 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserServiceInterface {
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserValidationService userValidationService;
     private final CarSortingService carSortingService;
     private final UserRepository userRepository;
@@ -52,9 +54,11 @@ public class UserServiceImpl implements UserServiceInterface {
      * @throws DuplicateResourceException if the email or login already exists
      */
     public UserResponseDto createUser(UserDto userDto) {
+        logger.info("Creating user with login: {}", userDto.login());
         userValidationService.validateUserDto(userDto);
         User user = userMapper.mapUserDtoToUser(userDto);
         userRepository.save(user);
+        logger.info("User created successfully with ID: {}", user.getId());
         return modelMapper.map(user, UserResponseDto.class);
     }
 
@@ -65,16 +69,13 @@ public class UserServiceImpl implements UserServiceInterface {
      */
     @Override
     public List<UserResponseDto> getAllUsers() {
+        logger.info("Retrieving all active users");
         List<User> users = userRepository.findUsersByStatus(UserStatus.ACTIVE);
         users.forEach(carSortingService::sortCarsByUsageAmount);
-
-        if (users.isEmpty()) {
-            return new ArrayList<>();
-        } else {
-            return users.stream()
-                    .map(user -> modelMapper.map(user, UserResponseDto.class))
-                    .toList();
-        }
+        logger.info("Retrieved {} users", users.size());
+        return users.stream()
+                .map(user -> modelMapper.map(user, UserResponseDto.class))
+                .toList();
     }
 
     /**
@@ -86,9 +87,11 @@ public class UserServiceImpl implements UserServiceInterface {
      */
     @Override
     public UserResponseDto getUserById(Long id) {
+        logger.info("Retrieving user with ID: {}", id);
         User user = userRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         carSortingService.sortCarsByUsageAmount(user);
+        logger.info("User retrieved successfully with ID: {}", id);
         return modelMapper.map(user, UserResponseDto.class);
     }
 
@@ -99,10 +102,12 @@ public class UserServiceImpl implements UserServiceInterface {
      * @throws ResourceNotFoundException if the user is not found
      */
     public void deleteUserById(Long id) {
+        logger.info("Deleting user with ID: {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         user.setStatus(UserStatus.INACTIVE);
         userRepository.save(user);
+        logger.info("User deleted successfully with ID: {}", id);
     }
 
     /**
@@ -114,6 +119,7 @@ public class UserServiceImpl implements UserServiceInterface {
      * @throws InvalidFieldsException    if the photo upload fails
      */
     public UserResponseDto uploadUserPhoto(Long userId, MultipartFile file) {
+        logger.info("Uploading photo for user with ID: {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         try {
@@ -123,8 +129,10 @@ public class UserServiceImpl implements UserServiceInterface {
             Files.write(path, bytes);
             user.setPhotoProfileUrl(path.toString());
             User newUser = userRepository.save(user);
+            logger.info("Photo uploaded successfully for user with ID: {}", userId);
             return modelMapper.map(newUser, UserResponseDto.class);
         } catch (IOException e) {
+            logger.error("Failed to upload photo for user with ID: {}", userId, e);
             throw new InvalidFieldsException(ErrorMessages.INVALID_PHOTO);
         }
     }
@@ -140,12 +148,11 @@ public class UserServiceImpl implements UserServiceInterface {
      */
     @Override
     public UserResponseDto updateUser(Long id, UserDto userUpdates) {
+        logger.info("Updating user with ID: {}", id);
         User existingUser = userRepository.findByIdAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
-
         User userUpdatesMapped = modelMapper.map(userUpdates, User.class);
         userValidationService.validateEmailAndLogin(existingUser, userUpdatesMapped);
-
         existingUser.setFirstName(userUpdates.firstName());
         existingUser.setLastName(userUpdates.lastName());
         existingUser.setBirthday(userUpdates.birthday());
@@ -153,9 +160,7 @@ public class UserServiceImpl implements UserServiceInterface {
         existingUser.setPassword(userUpdates.password());
         existingUser.setEmail(userUpdates.email());
         existingUser.setPhone(userUpdates.phone());
-
         if (userUpdates.cars() != null) {
-            // Update existing cars
             for (CarDto carUpdate : userUpdates.cars()) {
                 boolean carExists = false;
                 for (Car existingCar : existingUser.getCars()) {
@@ -167,7 +172,6 @@ public class UserServiceImpl implements UserServiceInterface {
                         break;
                     }
                 }
-                // Add new cars
                 if (!carExists) {
                     Optional<Car> existingCarOpt = carRepository.findByLicensePlate(carUpdate.licensePlate());
                     if (existingCarOpt.isPresent()) {
@@ -187,8 +191,8 @@ public class UserServiceImpl implements UserServiceInterface {
                 }
             }
         }
-
         User updatedUser = userRepository.save(existingUser);
+        logger.info("User updated successfully with ID: {}", id);
         return modelMapper.map(updatedUser, UserResponseDto.class);
     }
 }
