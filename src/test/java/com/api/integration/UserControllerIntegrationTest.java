@@ -89,7 +89,7 @@ class UserControllerIntegrationTest {
      */
     @Test
     void testCreateUserValid() {
-        ResponseEntity<User> response = restTemplate.postForEntity("/api/users/create", userDto, User.class);
+        ResponseEntity<User> response = restTemplate.postForEntity("/api/users", userDto, User.class);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -126,7 +126,7 @@ class UserControllerIntegrationTest {
             default -> throw new IllegalArgumentException("Unexpected field: " + fieldName);
         };
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/users/create", userDtoInvalid, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity("/api/users", userDtoInvalid, String.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -139,7 +139,7 @@ class UserControllerIntegrationTest {
         User existingUser = userRepository.save(user);
         userDto = new UserDto(userDto.firstName(), userDto.lastName(), userDto.birthday(), userDto.login(), userDto.password(), existingUser.getEmail(), userDto.phone(), userDto.cars());
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/users/create", userDto, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity("/api/users", userDto, String.class);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
@@ -152,7 +152,7 @@ class UserControllerIntegrationTest {
         User existingUser = userRepository.save(user);
         userDto = new UserDto(userDto.firstName(), userDto.lastName(), userDto.birthday(), existingUser.getLogin(), userDto.password(), userDto.email(), userDto.phone(), userDto.cars());
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/users/create", userDto, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity("/api/users", userDto, String.class);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
