@@ -7,6 +7,7 @@ import com.api.dto.UserDto;
 import com.api.dto.UserResponseDto;
 import com.api.entity.User;
 import com.api.exception.InvalidFieldsException;
+import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.UserServiceInterface;
 import com.api.repository.UserRepository;
@@ -166,7 +167,7 @@ public class UserController implements UserControllerOpenApi {
             return ResponseEntity.ok(new LoginResponseDTO(token));
         }
         logger.warn("Failed login attempt for user with login: {}", body.login());
-        return ResponseEntity.badRequest().build();
+        throw new MissingFieldsException(ErrorMessages.INVALID_LOGIN_OR_PASSWORD);
     }
 
 }
