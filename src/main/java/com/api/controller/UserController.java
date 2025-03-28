@@ -43,6 +43,22 @@ public class UserController implements UserControllerOpenApi {
     private final TokenService tokenService;
 
     /**
+     * Constructor for UserController.
+     *
+     * @param repository      the user repository
+     * @param passwordEncoder the password encoder
+     * @param tokenService    the token service
+     * @param userService     the user service interface
+     */
+    @Autowired
+    public UserController(UserRepository repository, PasswordEncoder passwordEncoder, TokenService tokenService, UserServiceInterface userService) {
+        this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
+        this.userService = userService;
+    }
+
+    /**
      * Service layer for user-related business logic.
      */
     @Autowired
