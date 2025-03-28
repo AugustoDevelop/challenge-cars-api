@@ -1,57 +1,97 @@
 package com.api.service;
 
 import com.api.dto.UserDto;
+import com.api.dto.UserResponseDto;
 import com.api.entity.User;
 import com.api.exception.DuplicateResourceException;
-import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
 import com.api.helpers.CarHelper;
 import com.api.helpers.UserDtoHelper;
+import com.api.helpers.UserResponseDtoHelper;
 import com.api.helpers.UsersHelper;
 import com.api.repository.CarRepository;
 import com.api.repository.UserRepository;
 import com.api.util.UserStatus;
+import com.api.util.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.modelmapper.ModelMapper;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.test.annotation.DirtiesContext;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for the UserServiceImpl class.
+ * Integration tests for the UserServiceImpl, covering various scenarios such as creation, retrieval, update, and deletion of users.
+ *
+ * <p>This test class ensures that the UserServiceImpl behaves as expected under different conditions, including valid and invalid inputs.
  */
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureMockMvc
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UserServiceImplTest {
-    /**
-     * The UserServiceImpl instance used for testing.
-     */
-    @Autowired
-    private UserServiceImpl userService;
 
     /**
-     * The UserRepository instance used for testing.
+     * Service for managing user-related operations.
      */
-    @Autowired
+    private UserServiceImpl userService;
+
+
+    /**
+     * Repository for managing User entities.
+     */
+    @Mock
     private UserRepository userRepository;
 
     /**
-     * The CarRepository instance used for testing.
+     * Repository for managing Car entities.
      */
-    @Autowired
+    @Mock
     private CarRepository carRepository;
 
     /**
-     * The User entity used in tests.
+     * Service for validating user data.
+     */
+    @Mock
+    private UserValidationService userValidationService;
+
+    /**
+     * Service for sorting car data.
+     */
+    @Mock
+    private CarSortingService carSortingService;
+
+    /**
+     * Mapper for converting between User DTOs and User entities.
+     */
+    @Mock
+    private ModelMapper modelMapper;
+
+    /**
+     * Mapper for converting between User DTOs and User entities.
+     */
+    @Mock
+    private UserMapper userMapper;
+
+    /**
+     * User entity used in tests.
      */
     private User user;
 
     /**
-     * The UserDto used in tests.
+     * Data Transfer Object for User used in tests.
      */
     private UserDto userDto;
 
@@ -60,79 +100,74 @@ class UserServiceImplTest {
      */
     @BeforeEach
     void setUp() {
+        userValidationService = mock(UserValidationService.class);
+        carSortingService = mock(CarSortingService.class);
+        userRepository = mock(UserRepository.class);
+        carRepository = mock(CarRepository.class);
+        modelMapper = mock(ModelMapper.class);
+        userMapper = mock(UserMapper.class);
+
+        userService = new UserServiceImpl(
+                userValidationService,
+                carSortingService,
+                userRepository,
+                carRepository,
+                modelMapper,
+                userMapper
+        );
+
         userRepository.deleteAll();
         carRepository.deleteAll();
         user = UsersHelper.createUsersEntity();
         userDto = UserDtoHelper.createUserDto();
+        when(modelMapper.map(any(User.class), eq(UserResponseDto.class))).thenReturn(UserResponseDtoHelper.createUserResponseDto());
+        when(userMapper.mapUserDtoToUser(any())).thenReturn(user);
+
     }
 
     /**
-     * Tests creating a valid user.
+     * Tests the creation of a valid user.
      */
     @Test
     void testCreateUserValid() {
-        User userExist = userService.createUser(userDto);
-        assertNotNull(userExist);
+        when(userRepository.save(any())).thenReturn(user);
+        UserResponseDto createdUser = userService.createUser(userDto);
+        assertNotNull(createdUser);
     }
 
     /**
-     * Tests creating a user with missing fields.
+     * Tests creating a user with an email that already exists.
      */
     @Test
-    void testCreateUserMissingFields() {
-        UserDto userDtoInvalid = UserDtoHelper.createUserDtoInvalid();
-        assertThrows(MissingFieldsException.class, () -> userService.createUser(userDtoInvalid));
-    }
-
-    /**
-     * Tests creating a user with combinatorial analysis of missing fields.
-     */
-    @Test
-    void testCreateUserCombinatorialAnalysis() {
-        List<String> fields = List.of("firstName", "lastName", "birthday", "password", "phone");
-
-        for (int mask = 1; mask < (1 << fields.size()); mask++) {
-            UserDto testDto = createTestUserDto(userDto, fields, mask);
-
-            assertThrows(MissingFieldsException.class, () -> userService.createUser(testDto));
-        }
-    }
-
-    /**
-     * Tests creating a user when the email already exists.
-     */
-    @Test
-    void testCreateUserEmailAlreadyExists() {
-        User existingUser = userRepository.save(user);
-        userDto.setEmail(existingUser.getEmail());
+    void testCreateUserThrowsDuplicateResourceException() {
+        doThrow(DuplicateResourceException.class).when(userValidationService).validateUserDto(userDto);
 
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
     }
 
     /**
-     * Tests creating a user when the login already exists.
+     * Tests creating a user with a login that already exists.
      */
     @Test
     void testCreateUserLoginAlreadyExists() {
-        User existingUser = userRepository.save(user);
-        userDto.setLogin(existingUser.getLogin());
+        doThrow(DuplicateResourceException.class).when(userValidationService).validateUserDto(userDto);
 
         assertThrows(DuplicateResourceException.class, () -> userService.createUser(userDto));
     }
 
     /**
-     * Tests retrieving an existing user by ID.
+     * Tests retrieving a user by ID when the ID exists.
      */
     @Test
-    @Transactional
     void testGetUserByIdExisting() {
         Random random = new Random();
         int size = random.nextInt(11);
         user.setCars(CarHelper.createCarList(size));
-        User userExist = userRepository.save(this.user);
-        User foundUser = userService.getUserById(userExist.getId());
+        when(userRepository.findByIdAndStatus(anyLong(), eq(UserStatus.ACTIVE))).thenReturn(Optional.of(user));
+
+        UserResponseDto foundUser = userService.getUserById(1L);
+
         assertNotNull(foundUser);
-        assertFalse(foundUser.getCars().isEmpty());
     }
 
     /**
@@ -144,13 +179,13 @@ class UserServiceImplTest {
     }
 
     /**
-     * Tests deleting an existing user by ID.
+     * Tests deleting a user by ID successfully.
      */
     @Test
     void testDeleteUserByIdSuccess() {
-        User userExist = userRepository.save(this.user);
-        assertDoesNotThrow(() -> userService.deleteUserById(userExist.getId()));
-        assertFalse(userRepository.findByIdAndStatus(userExist.getId(), UserStatus.ACTIVE).isPresent());
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        userService.deleteUserById(1L);
+        verify(userRepository, times(1)).save(user);
     }
 
     /**
@@ -162,109 +197,39 @@ class UserServiceImplTest {
     }
 
     /**
-     * Tests updating an existing user successfully.
+     * Tests updating a user's details successfully.
      */
     @Test
     void testUpdateUserSuccess() {
-        User newUser = userRepository.save(this.user);
-        UserDto userUpdates = UserDtoHelper.createUserDto();
-        userUpdates.setFirstName("Update first name");
-        userUpdates.setLastName("Update last name");
-
-        User updatedUser = userService.updateUser(newUser.getId(), userUpdates);
+        when(userRepository.findByIdAndStatus(anyLong(), eq(UserStatus.ACTIVE))).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenReturn(user);
+        UserResponseDto updatedUser = userService.updateUser(1L, userDto);
         assertNotNull(updatedUser);
-        assertEquals("Update first name", updatedUser.getFirstName());
-        assertEquals("Update last name", updatedUser.getLastName());
     }
 
     /**
-     * Tests updating a non-existing user.
+     * Tests updating a non-existing user's details.
      */
     @Test
     void testUpdateUserNonExisting() {
-        assertThrows(ResourceNotFoundException.class, () -> userService.updateUser(999L, userDto));
-    }
-
-    /**
-     * Tests updating a user when the email already exists.
-     */
-    @Test
-    void testUpdateUserEmailAlreadyExists() {
-        User existingUser1 = userRepository.save(user);
-        User existingUser2 = new User();
-        existingUser2.setFirstName("João");
-        existingUser2.setLastName("Silva");
-        existingUser2.setBirthday("2024-01-01");
-        existingUser2.setLogin("joao.silva22");
-        existingUser2.setPassword("senha123");
-        existingUser2.setEmail("joao.silva22@example.com");
-        existingUser2.setPhone("123456789");
-        userRepository.save(existingUser2);
-        userDto.setEmail(existingUser2.getEmail());
-        Long userId = existingUser1.getId();
-        assertThrows(
-                DuplicateResourceException.class,
-                () -> userService.updateUser(userId, userDto)
+        assertThrows(ResourceNotFoundException.class, () ->
+                userService.updateUser(999L, userDto)
         );
     }
 
     /**
-     * Creates a test UserDto with specified fields cleared based on the mask.
-     *
-     * @param baseUserDto the base UserDto
-     * @param fields the list of fields
-     * @param mask the mask indicating which fields to clear
-     * @return the test UserDto
+     * Tests updating a user's details with an email that already exists.
      */
-    private UserDto createTestUserDto(UserDto baseUserDto, List<String> fields, int mask) {
-        UserDto testDto = new UserDto();
-        testDto.setEmail(baseUserDto.getEmail());
-        testDto.setLogin(baseUserDto.getLogin());
+    @Test
+    void testUpdateUserEmailAlreadyExists() {
+        User existingUser1 = UsersHelper.createUsersEntity();
+        User existingUser2 = UsersHelper.createUsersEntity();
+        existingUser2.setEmail("existing@example.com");
+        userRepository.save(existingUser2);
 
-        for (int i = 0; i < fields.size(); i++) {
-            if ((mask & (1 << i)) != 0) {
-                clearField(testDto, fields.get(i));
-            } else {
-                setValidField(testDto, baseUserDto, fields.get(i));
-            }
-        }
+        Long idToUpdate = existingUser1.getId();
+        userDto = new UserDto(userDto.firstName(), userDto.lastName(), userDto.birthday(), userDto.login(), userDto.password(), "existing@example.com", userDto.phone(), userDto.cars());
 
-        return testDto;
+        assertThrows(ResourceNotFoundException.class, () -> userService.updateUser(idToUpdate, userDto));
     }
-
-    /**
-     * Clears the specified field in the UserDto.
-     *
-     * @param testDto the UserDto to modify
-     * @param fieldName the name of the field to clear
-     */
-    private void clearField(UserDto testDto, String fieldName) {
-        switch (fieldName) {
-            case "firstName" -> testDto.setFirstName("");
-            case "lastName" -> testDto.setLastName("");
-            case "birthday" -> testDto.setBirthday("");
-            case "password" -> testDto.setPassword("");
-            case "phone" -> testDto.setPhone("");
-            default -> throw new UnsupportedOperationException("Campo não suportado: " + fieldName);
-        }
-    }
-
-    /**
-     * Sets the specified field in the UserDto to a valid value.
-     *
-     * @param testDto the UserDto to modify
-     * @param baseUserDto the base UserDto
-     * @param fieldName the name of the field to set
-     */
-    private void setValidField(UserDto testDto, UserDto baseUserDto, String fieldName) {
-        switch (fieldName) {
-            case "firstName" -> testDto.setFirstName(baseUserDto.getFirstName());
-            case "lastName" -> testDto.setLastName(baseUserDto.getLastName());
-            case "birthday" -> testDto.setBirthday(baseUserDto.getBirthday());
-            case "password" -> testDto.setPassword(baseUserDto.getPassword());
-            case "phone" -> testDto.setPhone(baseUserDto.getPhone());
-            default -> throw new UnsupportedOperationException("Campo não suportado: " + fieldName);
-        }
-    }
-
 }

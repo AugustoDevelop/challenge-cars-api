@@ -2,7 +2,10 @@ package com.api.controller;
 
 import com.api.dto.CarDto;
 import com.api.entity.Car;
+import com.api.exception.InvalidFieldsException;
+import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.CarServiceInterface;
+import com.api.util.openapi.CarControllerOpenApi;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,22 +16,33 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Controller for managing cars.
+ * REST controller for managing car resources and operations.
+ *
+ * <p>Exposes endpoints for:
+ * <ul>
+ *   <li>Car CRUD operations</li>
+ *   <li>Photo upload functionality</li>
+ * </ul>
+ *
+ * <p>All endpoints are prefixed with {@code /api2/cars}
  */
 @RestController
-@RequestMapping("/cars")
+@RequestMapping(value = "/api/cars")
 @AllArgsConstructor
-public class CarController {
+public class CarController implements CarControllerOpenApi {
 
+    /**
+     * Service layer for handling car-related business logic
+     */
     private final CarServiceInterface carService;
 
     /**
-     * Creates a new car.
+     * Creates a new car with validated data.
      *
-     * @param carDto the car data transfer object
-     * @return the created car
+     * @param carDto validated car data transfer object
+     * @return HTTP 201 Created with persisted car entity
      */
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<Car> createCar(@RequestBody @Valid CarDto carDto) {
         Car createdCar = carService.createCar(carDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCar);
@@ -46,10 +60,11 @@ public class CarController {
     }
 
     /**
-     * Retrieves a car by its ID.
+     * Retrieves specific car by its unique identifier.
      *
-     * @param id the ID of the car
-     * @return the car with the specified ID
+     * @param id car ID path variable
+     * @return HTTP 200 OK with requested car details
+     * @throws ResourceNotFoundException if no car exists with given ID
      */
     @GetMapping("/{id}")
     public ResponseEntity<Car> getCarById(@PathVariable Long id) {
@@ -58,11 +73,11 @@ public class CarController {
     }
 
     /**
-     * Updates a car.
+     * Updates existing car details with validated data.
      *
-     * @param id     the ID of the car to update
-     * @param carDto the car data transfer object
-     * @return the updated car
+     * @param id car ID to update
+     * @param carDto validated updated car data
+     * @return HTTP 200 OK with updated car entity
      */
     @PutMapping("/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody @Valid CarDto carDto) {
@@ -71,23 +86,25 @@ public class CarController {
     }
 
     /**
-     * Deletes a car.
+     * Deletes a car by its unique identifier.
      *
-     * @param id the ID of the car to delete
-     * @return a response entity with no content
+     * @param id car ID to delete
+     * @return HTTP 204 No Content on successful deletion
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCarById(@PathVariable Long id) {
         carService.deleteCar(id);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Uploads a photo for a car.
+     * Handles car photo uploads for specific vehicles.
      *
-     * @param carId  the ID of the car
-     * @param file   the photo file to upload
-     * @return a response entity with a success message
+     * @param carId target car ID for photo association
+     * @param file uploaded image file (supported formats: JPEG, PNG)
+     * @return HTTP 200 OK with upload confirmation message
+     * @throws ResourceNotFoundException if the car is not found
+     * @throws InvalidFieldsException    if the photo upload fails
      */
     @PostMapping("/{carId}/upload-photo")
     public ResponseEntity<String> uploadCarPhoto(@PathVariable Long carId, @RequestParam("file") MultipartFile file) {

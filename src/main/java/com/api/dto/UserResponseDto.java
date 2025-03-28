@@ -6,21 +6,20 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
- * Data Transfer Object (DTO) for encapsulating user information.
+ * Data Response Object (DTO) for encapsulating user information.
  *
  * <p>This DTO is used to represent essential user details, including personal data and associated vehicles.
  * It ensures that required fields are validated before processing.
  *
  * @param firstName The user's first name (must not be blank).
  * @param lastName  The user's last name (must not be blank).
+ * @param email     The user's email address (must be valid and not blank).
  * @param birthday  The user's date of birth (must not be blank).
  * @param login     The user's unique login identifier (must not be blank).
- * @param password  The user's password (must not be blank).
- * @param email     The user's email address (must be valid and not blank).
  * @param phone     The user's phone number (must not be blank).
  * @param cars      A list of cars associated with the user.
  */
-public record UserDto(
+public record UserResponseDto(
         /**
          * The user's first name.
          */
@@ -34,6 +33,13 @@ public record UserDto(
         String lastName,
 
         /**
+         * The user's email address.
+         */
+        @Email(message = "Invalid email")
+        @NotBlank(message = "Email is required")
+        String email,
+
+        /**
          * The user's date of birth.
          */
         @NotBlank(message = "Birthday is required")
@@ -44,19 +50,6 @@ public record UserDto(
          */
         @NotBlank(message = "Login is required")
         String login,
-
-        /**
-         * The user's password.
-         */
-        @NotBlank(message = "Password is required")
-        String password,
-
-        /**
-         * The user's email address.
-         */
-        @Email(message = "Invalid email")
-        @NotBlank(message = "Email is required")
-        String email,
 
         /**
          * The user's phone number.

@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Enum representing various error messages and their associated HTTP status codes.
+ *
+ * <p>This enum provides a centralized way to manage error messages throughout the application,
+ * along with the corresponding HTTP status codes for consistent error handling in API responses.
  */
 @Getter
 @RequiredArgsConstructor
@@ -54,7 +57,12 @@ public enum ErrorMessages {
     /**
      * Error message indicating a failure to upload a car photo.
      */
-    INVALID_PHOTO("Failed to upload car photo", HttpStatus.BAD_REQUEST);
+    INVALID_PHOTO("Failed to upload car photo", HttpStatus.BAD_REQUEST),
+
+    /**
+     * Error message indicating a duplicate resource.
+     */
+    DUPLICATE_RESOURCE("Duplicate resource", HttpStatus.CONFLICT);
 
     /**
      * The error message.

@@ -1,162 +1,164 @@
-# API RESTful de Usuários e Carros
+# RESTful API for Users and Cars
 
-API RESTful para gerenciamento de usuários e carros, com autenticação JWT, desenvolvida em Java 8 e Spring Boot.
+RESTful API for managing users and cars, with JWT authentication, developed in Java 8 and Spring Boot.
 
-## Índice
+## Index
 
-- [Estórias de Usuário](#estórias-de-usuário)
-- [Solução](#solução)
-- [Requisitos](#requisitos)
-- [Como Executar](#como-executar)
-- [Endpoints da API](#endpoints-da-api)
-- [Executando Testes](#executando-testes)
-- [Documentação da API](#documentação-da-api)
-- [Deploy](#deploy)
+- [User Stories](#user-stories)
+- [Solution](#solution)
+- [Requirements](#requirements)
+- [How to Run](#how-to-run)
+- [API Endpoints](#api-endpoints)
+- [Running Tests](#running-tests)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
 
-## Estórias de Usuário
+## User Stories
 
-1. **US-01: Integração com SonarQube para Análise de Código** Como desenvolvedor, quero integração com SonarQube para garantir a qualidade do código e identificar vulnerabilidades potencial. (✅)
-2. **US-02: Integração com JFrog Artifactory para Gerenciamento de Artefatos** Como arquiteto de software, preciso de um repositório de artefatos para gerenciar dependências e builds do projeto. (✅)
-3. **US-03: Configuração do Pipeline CI/CD no Jenkins** Como equipe de DevOps, queremos automatizar o processo de integração e entrega contínua usando Jenkins, para garantir builds consistentes e implantação automatizada. (⚠️)
-4. **US-04 - Criação do controller Advice**: Como usuário, quero receber os erros correspondentes a cada exceção lançada. (✅)
-5. **US-05 - Cadastro de Usuário**: Como usuário, quero me cadastrar no sistema fornecendo meus dados pessoais para que eu possa ter acesso às funcionalidades.(✅)
-6. **US-06 - Consulta de Usuários**: Como usuário, quero visualizar a lista de todos os usuários cadastrados no sistema.(✅)
-7. **US-07 - Consulta de Usuário por ID**: Como usuário, quero consultar os dados de um usuário específico informando seu ID.(✅)
-8. **US-08 - Atualização de Usuário**: Como usuário cadastrado, quero atualizar meus dados cadastrais no sistema.(✅)
-9. **US-09 - Remoção de Usuário**: Como usuário cadastrado, quero remover minha conta do sistema.(✅)
-10. **US-10 - Login de Usuário**: Como usuário cadastrado, quero fazer login no sistema utilizando minhas credenciais para ter acesso às funcionalidades autenticadas.
-11. **US-11 - Consulta de Informações do Usuário Logado**: Como usuário logado, quero visualizar minhas informações pessoais, data de criação e último login.
-12. **US-12 - Cadastro de Carro**: Como usuário logado, quero cadastrar um novo carro em minha conta.(✅)
-13. **US-13 - Consulta de Carros do Usuário**: Como usuário logado, quero visualizar todos os carros cadastrados em minha conta.(✅)
-14. **US-14 - Consulta de Carro por ID**: Como usuário logado, quero consultar os dados de um carro específico cadastrado em minha conta.(✅)
-15. **US-15 - Atualização de Carro**: Como usuário logado, quero atualizar os dados de um carro cadastrado em minha conta.(✅)
-16. **US-16 - Remoção de Carro**: Como usuário logado, quero remover um carro cadastrado em minha conta.(✅)
-17. **US-17 - Ranking de Usuários e Carros**: Como desenvolvedor, quero implementar um sistema de ranking que ordene usuários e carros por frequência de uso.
-18. **US-18 - Documentação (Javadoc)**: Como desenvolvedor, quero gerar e manter a documentação Javadoc para facilitar a compreensão e manutenção do código.(✅)
+1. **US-01: Integration with SonarQube for Code Analysis** As a developer, I want integration with SonarQube to ensure
+   code quality and identify potential vulnerabilities. (✅)
+2. **US-02: Integration with JFrog Artifactory for Artifact Management** As a software architect, I need an artifact
+   repository to manage project dependencies and builds. (✅)
+3. **US-03: CI/CD Pipeline Configuration in Jenkins** As a DevOps team, we want to automate the continuous integration
+   and delivery process using Jenkins to ensure consistent builds and automated deployment. (⚠️)
+4. **US-04 - Creation of Controller Advice**: As a user, I want to receive the corresponding errors for each exception
+   thrown. (✅)
+5. **US-05 - User Registration**: As a user, I want to register in the system by providing my personal data so that I
+   can access the functionalities. (✅)
+6. **US-06 - User Query**: As a user, I want to view the list of all users registered in the system. (✅)
+7. **US-07 - User Query by ID**: As a user, I want to query the data of a specific user by providing their ID. (✅)
+8. **US-08 - User Update**: As a registered user, I want to update my registration data in the system. (✅)
+9. **US-09 - User Deletion**: As a registered user, I want to remove my account from the system. (✅)
+10. **US-10 - User Login**: As a registered user, I want to log in to the system using my credentials to access
+    authenticated functionalities. (✅)
+11. **US-11 - Query Logged-in User Information**: As a logged-in user, I want to view my personal information, creation
+    date, and last login. (⚠️)
+12. **US-12 - Car Registration**: As a logged-in user, I want to register a new car in my account. (✅)
+13. **US-13 - Query User's Cars**: As a logged-in user, I want to view all cars registered in my account. (✅)
+14. **US-14 - Query Car by ID**: As a logged-in user, I want to query the data of a specific car registered in my
+    account. (✅)
+15. **US-15 - Car Update**: As a logged-in user, I want to update the data of a car registered in my account. (✅)
+16. **US-16 - Car Deletion**: As a logged-in user, I want to remove a car registered in my account. (✅)
+17. **US-17 - User and Car Ranking**: As a developer, I want to implement a ranking system that orders users and cars by
+    usage frequency. (✅)
+18. **US-18 - Documentation (Javadoc)**: As a developer, I want to generate and maintain Javadoc documentation to
+    facilitate code understanding and maintenance. (✅)
 
-## Solução
+## Solution
 
-### Arquitetura
+### Architecture
 
-O projeto foi desenvolvido utilizando uma arquitetura em camadas seguindo os princípios REST e boas práticas de desenvolvimento:
+The project was developed using a layered architecture following REST principles and best development practices:
 
-1. **Camada de Apresentação**: Controllers REST que expõem os endpoints da API.
-2. **Camada de Serviço**: Lógica de negócio e regras da aplicação.
-3. **Camada de Persistência**: Repositórios JPA para acesso ao banco de dados.
-4. **Camada de Modelo**: Entidades JPA e DTOs para transferência de dados.
+1. **Presentation Layer**: REST Controllers exposing the API endpoints.
+2. **Service Layer**: Business logic and application rules.
+3. **Persistence Layer**: JPA repositories for database access.
+4. **Model Layer**: JPA entities and DTOs for data transfer.
 
-### Justificativa Técnica
+### Technical Justification
 
 #### Spring Boot
 
-Utilizamos o Spring Boot como framework principal devido à sua facilidade de configuração, robustez e ampla adoção na comunidade. O Spring Boot nos permitiu focar no desenvolvimento das funcionalidades de negócio, evitando configurações complexas.
+We used Spring Boot as the main framework due to its ease of configuration, robustness, and wide adoption in the
+community. Spring Boot allowed us to focus on developing business functionalities, avoiding complex configurations.
 
-#### Banco de Dados H2
+#### H2 Database
 
-O banco de dados H2 em memória foi escolhido para simplificar o desenvolvimento e testes, além de atender ao requisito do desafio. Por ser um banco em memória, não requer instalação adicional e facilita o deploy.
+The in-memory H2 database was chosen to simplify development and testing, as well as to meet the challenge requirement.
+Being an in-memory database, it does not require additional installation and facilitates deployment.
 
-#### Segurança com JWT
+#### Security with JWT
 
-Implementamos autenticação e autorização utilizando JWT (JSON Web Token), garantindo que as rotas protegidas só possam ser acessadas por usuários autenticados. O token JWT carrega informações do usuário de forma segura e eficiente.
+We implemented authentication and authorization using JWT (JSON Web Token), ensuring that protected routes can only be
+accessed by authenticated users. The JWT token securely and efficiently carries user information.
 
-#### Validação de Dados
+#### Data Validation
 
-Utilizamos Bean Validation para validação de dados de entrada, garantindo a integridade e consistência dos dados. Isso nos permitiu criar mensagens de erro padronizadas conforme solicitado.
+We used Bean Validation for input data validation, ensuring data integrity and consistency. This allowed us to create
+standardized error messages as requested.
 
-#### Tratamento de Exceções Centralizado
+#### Centralized Exception Handling
 
-Implementamos um tratamento global de exceções com `@ControllerAdvice`, padronizando as respostas de erro da API de acordo com o formato solicitado.
+We implemented global exception handling with `@ControllerAdvice`, standardizing the API error responses according to
+the requested format.
 
-#### Escalabilidade
+#### Scalability
 
-A arquitetura escolhida permite escalar horizontalmente a aplicação, adicionando mais instâncias conforme necessário. Além disso, a separação em camadas facilita a manutenção e evolução do código.
+The chosen architecture allows horizontal scaling of the application by adding more instances as needed. Additionally,
+the separation into layers facilitates code maintenance and evolution.
 
-#### Ranking de Usuários e Carros
+#### User and Car Ranking
 
-Para o requisito extra, implementamos um sistema de contagem de uso dos carros que incrementa um contador cada vez que um carro é consultado. Utilizamos queries JPQL para ordenar usuários e carros conforme os critérios especificados.
+For the extra requirement, we implemented a car usage counting system that increments a counter each time a car is
+queried. We used JPQL queries to order users and cars according to the specified criteria.
 
-### Design Patterns Utilizados
+### Design Patterns Used
 
-1. **MVC (Model-View-Controller)**: Separação clara entre modelo, visualização e controle.
-2. **DTO (Data Transfer Object)**: Para transferência de dados entre as camadas da aplicação.
-3. **Repository Pattern**: Abstração da camada de acesso a dados.
-4. **Dependency Injection**: Injeção de dependências para acoplamento fraco entre componentes.
-5. **Builder Pattern**: Utilizado em testes para construção de objetos complexos.
-6. **Filter Chain**: Para processamento de requisições HTTP e autenticação JWT.
+1. **MVC (Model-View-Controller)**: Clear separation between model, view, and control.
+2. **DTO (Data Transfer Object)**: For data transfer between application layers.
+3. **Repository Pattern**: Abstraction of the data access layer.
+4. **Dependency Injection**: Dependency injection for loose coupling between components.
+5. **Builder Pattern**: Used in tests for building complex objects.
+6. **Filter Chain**: For processing HTTP requests and JWT authentication.
 
-## Requisitos
-Certifique-se de que os seguintes itens estejam instalados e configurados no seu sistema:
+## Requirements
+
+Make sure the following items are installed and configured on your system:
 - Git
 - Java 17
 - Maven 3.6+
-- Docker (v20.10 ou superior)
-- Verifique se as portas 8080 e 50000 estão livres no seu sistema para o Jenkins.
+- Docker (v20.10 or higher)
+- Ensure that ports 8080 and 50000 are free on your system for Jenkins.
 
-## Como Executar
-
-### Iniciando o Jenkins
-No diretório do projeto onde o docker-compose.yml está localizado, execute:
-
-```bash
-  docker-compose up -d
-```
-Após a execução do comando acima, acesse o Jenkins em `http://localhost:8080` e siga as instruções para configurar o Jenkins.
-
-```bash
-  docker-compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
-```
-
-### Compilando e Executando com Maven
+### Compiling and Running with Maven
 
 ```bash
   mvn clean install
   mvn spring-boot:run
 ```
 
-### Executando com o JAR
+### Running with the JAR
 
 ```bash
-java -jar target/car-user-api-0.0.1-SNAPSHOT.jar
+  java -jar target/car-user-api-0.0.1-SNAPSHOT.jar
 ```
 
-### Acessando o Console H2
+### Accessing the H2 Console
 
-O console do banco de dados H2 estará disponível em `http://localhost:8080/h2-console` com as seguintes configurações:
+The H2 database console will be available at http://ec2-52-73-230-3.compute-1.amazonaws.com:8080/h2 with the following
+settings:
 
 - JDBC URL: `jdbc:h2:mem:cardb`
 - Username: `sa`
 - Password: (vazio)
 
-## Endpoints da API
+## API Endpoints
 
-### Rotas Públicas (não requerem autenticação)
+### Public Routes (do not require authentication) - User Endpoints
 
-```
-POST /api/signin - Login de usuário
-GET /api/user - Listar todos os usuários
-POST /api/user - Cadastrar novo usuário
-GET /api/user/{id} - Buscar usuário por ID
-DELETE /api/user/{id} - Remover usuário por ID
-PUT /api/user/{id} - Atualizar usuário por ID
-```
+- **POST** `/api/v1/users`: Register a new user.
+- **GET** `/api/v1/users`: Get all users.
+- **GET** `/api/v1/users/{id}`: Get user by ID.
+- **PUT** `/api/v1/users/{id}`: Update user by ID.
+- **DELETE** `/api/v1/users/{id}`: Delete user by ID.
+- **POST** `/api/v1/users/login`: User login.
+- **GET** `/api/v1/users/me`: Get logged-in user information.
 
-### Rotas Autenticadas (requerem token JWT)
+### Authenticated Routes (require JWT token) - Car Endpoints
 
-```
-GET /api/me - Informações do usuário logado
-GET /api/cars - Listar carros do usuário logado
-POST /api/cars - Cadastrar novo carro
-GET /api/cars/{id} - Buscar carro por ID
-DELETE /api/cars/{id} - Remover carro por ID
-PUT /api/cars/{id} - Atualizar carro por ID
-```
+- **POST** `/api/v1/cars`: Register a new car.
+- **GET** `/api/v1/cars`: Get all cars.
+- **GET** `/api/v1/cars/{id}`: Get car by ID.
+- **PUT** `/api/v1/cars/{id}`: Update car by ID.
+- **DELETE** `/api/v1/cars/{id}`: Delete car by ID.
+- **GET** `/api/v1/cars/ranking`: Get car ranking by usage frequency.
 
-### Exemplos de Uso
+### Usage Examples
 
-#### Cadastro de Usuário
+#### User Registration
 
 ```bash
-  curl -X POST http://localhost:8080/api/user \
+  curl -X POST http://ec2-52-73-230-3.compute-1.amazonaws.com:8080/api/user \
 -H "Content-Type: application/json" \
 -d '{
     "firstName": "Hello",
@@ -177,10 +179,10 @@ PUT /api/cars/{id} - Atualizar carro por ID
 }'
 ```
 
-#### Login de Usuário
+### User Login
 
 ```bash
-  curl -X POST http://localhost:8080/api/signin \
+  curl -X POST http://ec2-52-73-230-3.compute-1.amazonaws.com:8080/api/signin \
 -H "Content-Type: application/json" \
 -d '{
     "login": "hello.world",
@@ -188,77 +190,43 @@ PUT /api/cars/{id} - Atualizar carro por ID
 }'
 ```
 
-#### Consulta de Informações do Usuário Logado
+### Query Logged-in User Information
 
 ```bash
-  curl -X GET http://localhost:8080/api/me \
+  curl -X GET http://ec2-52-73-230-3.compute-1.amazonaws.com:8080/api/me \
 -H "Authorization: Bearer {token-jwt}"
 ```
 
-## Executando Testes
+## Running Tests
 
-Para executar os testes unitários:
+To run unit tests
 
 ```bash
   mvn test
 ```
 
-Para executar relatório de cobertura de testes:
+To run test coverage report:
 
 ```bash
   mvn verify
 ```
 
-O relatório de cobertura estará disponível em `target/site/jacoco/index.html`
+The coverage report will be available at `target/site/jacoco/index.html`
 
-## Documentação da API
+## API Documentation
 
-A documentação da API está disponível através do Swagger UI:
+The API documentation is available at the following URL:
 
 ```
-http://localhost:8080/swagger-ui/
+   ec2-52-73-230-3.compute-1.amazonaws.com/swagger-ui/index.html
 ```
 
-## Deploy
+## Deployment
 
-### Heroku
+### Automatic Deployment via GitHub
 
-Para fazer deploy no Heroku:
+You can also set up automatic deployment to AWS via GitHub by creating a pull request to the main branch. This can be
+achieved using GitHub Actions. Here is an example of a GitHub Actions workflow `(.github/workflows/deploy.yml)`:
 
-1. Instale o Heroku CLI
-2. Faça login no Heroku
-   ```bash
-   heroku login
-   ```
-3. Crie um novo aplicativo Heroku
-   ```bash
-   heroku create car-user-api
-   ```
-4. Configure o remote do Git
-   ```bash
-   heroku git:remote -a car-user-api
-   ```
-5. Faça o push para o Heroku
-   ```bash
-   git push heroku main
-   ```
-
-### Docker
-
-Você também pode executar a aplicação usando Docker:
-
-```bash
-docker build -t car-user-api .
-docker run -p 8080:8080 car-user-api
-```
-
-
-Acesse os serviços:
-
-Jenkins: http://localhost:8080
-
-SonarQube: http://localhost:9000
-
-JFrog: http://localhost:8081
-
-Aplicação: http://localhost:8082
+This workflow will automatically build, tag, and push the Docker image to AWS ECR and then update the ECS service to
+deploy the new image whenever there is a push to the main branch.
