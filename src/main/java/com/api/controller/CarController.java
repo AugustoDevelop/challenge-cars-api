@@ -8,6 +8,7 @@ import com.api.interfaces.CarServiceInterface;
 import com.api.util.openapi.CarControllerOpenApi;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,16 @@ public class CarController implements CarControllerOpenApi {
      * Service layer for handling car-related business logic
      */
     private final CarServiceInterface carService;
+
+    /**
+     * Constructor for CarController.
+     *
+     * @param carService the car service interface
+     */
+    @Autowired
+    public CarController(CarServiceInterface carService) {
+        this.carService = carService;
+    }
 
     /**
      * Creates a new car with validated data.
