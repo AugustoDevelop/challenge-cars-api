@@ -5,6 +5,8 @@ import lombok.Getter;
 
 /**
  * Custom exception class for handling application-specific errors.
+ *
+ * <p>This exception is used to encapsulate error messages and provide a standardized way to handle and propagate errors throughout the application.
  */
 @Getter
 public class CustomException extends RuntimeException {

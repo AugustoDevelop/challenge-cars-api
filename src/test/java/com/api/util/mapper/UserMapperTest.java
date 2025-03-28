@@ -9,9 +9,10 @@ import com.api.helpers.CarHelper;
 import com.api.repository.CarRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,25 +23,36 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for the UserMapper class.
+ * Unit tests for the UserMapper class, ensuring correct mapping from UserDto to User entity.
+ *
+ * <p>This test class verifies the behavior of the UserMapper, particularly in scenarios where cars
+ * may either exist in the repository or need to be created as new instances.
  */
+@ExtendWith(MockitoExtension.class)
 class UserMapperTest {
 
     @Mock
     private CarRepository carRepository;
 
-    @InjectMocks
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     private UserMapper userMapper;
 
     private Car car;
+    private CarDto carDto;
 
     /**
      * Sets up the test environment before each test.
      */
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        carRepository = mock(CarRepository.class);
+        passwordEncoder = mock(PasswordEncoder.class);
+        userMapper = new UserMapper(carRepository, passwordEncoder);
+
         car = CarHelper.createCar();
+        carDto = CarDtoHelper.createCarDto();
     }
 
     /**
@@ -54,13 +66,9 @@ class UserMapperTest {
 
         when(carRepository.findByLicensePlate(anyString())).thenReturn(Optional.of(car));
 
-        CarDto carDto = CarDtoHelper.createCarDto();
-        carDto.setLicensePlate("ABC1234");
+        CarDto carDto = new CarDto(car.getYear(), car.getLicensePlate(), car.getModel(), car.getColor());
 
-        UserDto userDto = new UserDto();
-        userDto.setFirstName("John");
-        userDto.setLastName("Doe");
-        userDto.setCars(List.of(car));
+        UserDto userDto = new UserDto("John", "Doe", "1990-01-01", "john.doe", "password", "john.doe@example.com", "123456789", List.of(carDto));
 
         // Act
         User user = userMapper.mapUserDtoToUser(userDto);
@@ -82,12 +90,8 @@ class UserMapperTest {
     void testMapUserDtoToUser_WithNewCar() {
         // Arrange
         when(carRepository.findByLicensePlate(anyString())).thenReturn(Optional.empty());
-        Car car = CarHelper.createCar();
 
-        UserDto userDto = new UserDto();
-        userDto.setFirstName("Jane");
-        userDto.setLastName("Smith");
-        userDto.setCars(List.of(car));
+        UserDto userDto = new UserDto("Jane", "Smith", "1990-01-01", "jane.smith", "password", "jane.smith@example.com", "987654321", List.of(carDto));
 
         // Act
         User user = userMapper.mapUserDtoToUser(userDto);
@@ -97,13 +101,13 @@ class UserMapperTest {
         assertEquals("Jane", user.getFirstName());
         assertEquals("Smith", user.getLastName());
         assertEquals(1, user.getCars().size());
-        Car newCar = user.getCars().get(0);
-        assertEquals(car.getLicensePlate(), newCar.getLicensePlate());
-        assertEquals(car.getYear(), newCar.getYear());
-        assertEquals(car.getModel(), newCar.getModel());
-        assertEquals(car.getColor(), newCar.getColor());
 
-        verify(carRepository, times(1)).findByLicensePlate(car.getLicensePlate());
-        verify(carRepository, times(1)).save(any(Car.class));
+        Car newCar = user.getCars().get(0);
+        assertEquals(carDto.licensePlate(), newCar.getLicensePlate());
+        assertEquals(carDto.year(), newCar.getYear());
+        assertEquals(carDto.model(), newCar.getModel());
+        assertEquals(carDto.color(), newCar.getColor());
+
+        verify(carRepository, times(1)).findByLicensePlate(carDto.licensePlate());
     }
 }

@@ -1,60 +1,69 @@
 package com.api.interfaces;
 
 import com.api.dto.UserDto;
-import com.api.entity.User;
+import com.api.dto.UserResponseDto;
+import com.api.exception.DuplicateResourceException;
+import com.api.exception.ResourceNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 /**
- * Service interface for managing users.
+ * Service interface for managing user entities, providing methods for CRUD operations and photo uploads.
+ *
+ * <p>This interface defines the contract for user-related business logic, ensuring encapsulation and reusability of user management functionality.
  */
 public interface UserServiceInterface {
 
     /**
-     * Creates a new user.
+     * Creates a new user based on the provided data transfer object.
      *
-     * @param userDto the user data transfer object
-     * @return the created user
+     * @param userDto the user data transfer object containing user details
+     * @return the created User entity as a UserDto
      */
-    User createUser(UserDto userDto);
+    UserResponseDto createUser(UserDto userDto);
 
     /**
-     * Retrieves all users.
+     * Retrieves all available users in the system.
      *
-     * @return the list of users
+     * @return a list of all User entities
      */
-    List<User> getAllUsers();
+    List<UserResponseDto> getAllUsers();
 
     /**
-     * Retrieves a user by ID.
+     * Retrieves a specific user by their unique identifier.
      *
-     * @param id the user ID
-     * @return the user
+     * @param id the ID of the user to retrieve
+     * @return the User entity with the specified ID
+     * @throws ResourceNotFoundException if no user exists with the given ID
      */
-    User getUserById(Long id);
+    UserResponseDto getUserById(Long id);
 
     /**
-     * Deletes a user by ID.
+     * Deletes a user by their unique identifier.
      *
-     * @param id the user ID
+     * @param id the ID of the user to delete
+     * @throws ResourceNotFoundException if no user exists with the given ID
      */
     void deleteUserById(Long id);
 
     /**
-     * Updates a user.
+     * Updates an existing user with the provided updated details.
      *
-     * @param id          the user ID
-     * @param userUpdates the user data transfer object with updates
-     * @return the updated user
+     * @param id          the ID of the user to update
+     * @param userUpdates the user data transfer object containing updated user details
+     * @return the updated User entity
+     * @throws ResourceNotFoundException  if the user is not found
+     * @throws DuplicateResourceException if the email or login already exists
      */
-    User updateUser(Long id, UserDto userUpdates);
+    UserResponseDto updateUser(Long id, UserDto userUpdates);
 
     /**
-     * Uploads a user's photo.
+     * Uploads a photo for a specific user.
      *
      * @param userId the user ID
      * @param file   the photo file
+     * @return the updated user with the photo URL
      */
-    void uploadUserPhoto(Long userId, MultipartFile file);
+    UserResponseDto uploadUserPhoto(Long userId, MultipartFile file);
 }

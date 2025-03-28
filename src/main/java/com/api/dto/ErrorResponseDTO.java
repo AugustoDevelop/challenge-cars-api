@@ -1,23 +1,23 @@
 package com.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * Data Transfer Object for error responses.
+ * Data Transfer Object (DTO) for encapsulating error responses.
+ *
+ * <p>This DTO is used to standardize the structure of error messages returned
+ * by the API, providing both a descriptive message and an associated error code.
+ *
+ * @param message   A descriptive error message indicating the nature of the error.
+ * @param errorCode An integer representing the specific error code.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ErrorResponseDTO {
-    /**
-     * The error message.
-     */
-    private String message;
+public record ErrorResponseDTO(
+        /**
+         * A descriptive error message indicating the nature of the error.
+         */
+        String message,
 
-    /**
-     * The error code.
-     */
-    private Integer errorCode;
+        /**
+         * An integer representing the specific error code.
+         */
+        Integer errorCode
+) {
 }

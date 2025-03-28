@@ -12,16 +12,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Global exception handler for the application.
+ * Global exception handler for the application, providing centralized error handling and response standardization.
+ *
+ * <p>This class intercepts and manages various types of exceptions, ensuring consistent error responses are returned to clients.
  */
 @RestControllerAdvice
 public class GlobalControllerAdvice {
 
     /**
-     * Handles custom exceptions.
+     * Handles custom exceptions by returning a standardized error response.
      *
-     * @param ex the custom exception
-     * @return a response entity containing the error message and status code
+     * @param ex the custom exception being handled
+     * @return a ResponseEntity containing the error message and corresponding HTTP status code
      */
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<Map<String, Object>> handleCustomException(CustomException ex) {
@@ -30,10 +32,10 @@ public class GlobalControllerAdvice {
     }
 
     /**
-     * Handles validation exceptions.
+     * Handles validation exceptions by returning a bad request response with error details.
      *
-     * @param ex the validation exception
-     * @return a response entity containing the error message and status code
+     * @param ex the validation exception being handled
+     * @return a ResponseEntity with a bad request status and error message
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -45,10 +47,10 @@ public class GlobalControllerAdvice {
     }
 
     /**
-     * Handles missing fields exceptions.
+     * Handles missing fields exceptions by returning a bad request response with error details.
      *
-     * @param ex the missing fields exception
-     * @return a response entity containing the error message and status code
+     * @param ex the missing fields exception being handled
+     * @return a ResponseEntity with a bad request status and error message
      */
     @ExceptionHandler(MissingFieldsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -57,11 +59,11 @@ public class GlobalControllerAdvice {
     }
 
     /**
-     * Builds a response entity with the given message and error code.
+     * Builds a standardized error response entity with the given message and error code.
      *
-     * @param message   the error message
-     * @param errorCode the error code
-     * @return a response entity containing the error message and status code
+     * @param message   the error message to be included in the response
+     * @param errorCode the HTTP status code for the response
+     * @return a ResponseEntity containing the error message and corresponding HTTP status code
      */
     private ResponseEntity<Map<String, Object>> buildResponse(String message, int errorCode) {
         Map<String, Object> body = new HashMap<>();

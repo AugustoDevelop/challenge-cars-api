@@ -1,7 +1,9 @@
 package com.api.service;
 
+import com.api.config.TokenService;
 import com.api.dto.CarDto;
 import com.api.entity.Car;
+import com.api.entity.User;
 import com.api.exception.InvalidFieldsException;
 import com.api.exception.MissingFieldsException;
 import com.api.exception.ResourceNotFoundException;
@@ -9,7 +11,6 @@ import com.api.interfaces.CarServiceInterface;
 import com.api.repository.CarRepository;
 import com.api.util.ErrorMessages;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,45 +24,54 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Service implementation for managing cars.
+ * Service implementation for managing Car entities, providing methods for CRUD operations and photo uploads.
+ *
+ * <p>This class encapsulates the business logic for car management, ensuring validation and consistency of car data.
  */
 @Service
 @AllArgsConstructor
 public class CarServiceImpl implements CarServiceInterface {
 
     private final CarRepository carRepository;
-    private final ModelMapper modelMapper;
     private final Map<Long, Integer> carUsageCount = new HashMap<>();
-
+    private final TokenService tokenService;
     /**
-     * Creates a new car.
+     * Creates a new car based on the provided data transfer object.
      *
      * @param carDto the car data transfer object
-     * @return the created car
-     * @throws MissingFieldsException if any required fields are missing
+     * @return the created Car entity
+     * @throws MissingFieldsException     if any required fields are missing
+     *
      */
     public Car createCar(CarDto carDto) {
-        if (carDto.getLicensePlate().isBlank() || carDto.getModel().isBlank() || carDto.getColor().isBlank()) {
+        if (carDto.licensePlate().isBlank() || carDto.model().isBlank() || carDto.color().isBlank()) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
         }
-        if (carRepository.findByLicensePlate(carDto.getLicensePlate()).isPresent()) {
+        if (carRepository.findByLicensePlate(carDto.licensePlate()).isPresent()) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
         }
-        Car car = modelMapper.map(carDto, Car.class);
+
+        User loggedUser = tokenService.getLoggedUser();
+        Car car = new Car();
+        car.setYear(carDto.year());
+        car.setLicensePlate(carDto.licensePlate());
+        car.setModel(carDto.model());
+        car.setColor(carDto.color());
+        car.setUser(loggedUser);
+
         return carRepository.save(car);
     }
 
     /**
-     * Retrieves all cars.
+     * Retrieves all available cars in the system.
      *
-     * @return a list of cars
+     * @return a list of all Car entities
      */
     public List<Car> getAllCars() {
-        return carRepository.findAll();
+        User loggedUser = tokenService.getLoggedUser();
+        return carRepository.findByUser_Login(loggedUser.getLogin());
     }
-
     /**
-     /**
      * Retrieves a car by its ID and increments its usage amount.
      *
      * @param id the ID of the car
@@ -69,7 +79,8 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws ResourceNotFoundException if the car is not found
      */
     public Car getCarById(Long id) {
-        Car car = carRepository.findById(id)
+        User loggedUser = tokenService.getLoggedUser();
+        Car car = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
         car.setUsageAmount(car.getUsageAmount() + 1);
         carRepository.save(car);
@@ -81,21 +92,24 @@ public class CarServiceImpl implements CarServiceInterface {
     }
 
     /**
-     * Updates a car.
+     * Updates an existing car with the provided updated details.
      *
      * @param id     the car ID
      * @param carDto the car data transfer object with updates
-     * @return the updated car
+     * @return the updated Car entity
      * @throws ResourceNotFoundException if the car is not found
+     * @throws MissingFieldsException    if any required fields are missing
      */
     public Car updateCar(Long id, CarDto carDto) {
+        User loggedUser = tokenService.getLoggedUser();
         validateCars(carDto);
-        Optional<Car> existingCar = getCarByLicensePlate(carDto.getLicensePlate());
+        Optional<Car> existingCar = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin());
         if (existingCar.isPresent()) {
-            existingCar.get().setYear(carDto.getYear());
-            existingCar.get().setLicensePlate(carDto.getLicensePlate());
-            existingCar.get().setModel(carDto.getModel());
-            existingCar.get().setColor(carDto.getColor());
+            existingCar.get().setYear(carDto.year());
+            existingCar.get().setLicensePlate(carDto.licensePlate());
+            existingCar.get().setModel(carDto.model());
+            existingCar.get().setColor(carDto.color());
+            existingCar.get().setUser(loggedUser);
             return carRepository.save(existingCar.get());
         } else {
             throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
@@ -103,20 +117,20 @@ public class CarServiceImpl implements CarServiceInterface {
     }
 
     /**
-     * Deletes a car by ID.
+     * Deletes a car by its ID.
      *
      * @param id the car ID
      * @throws ResourceNotFoundException if the car is not found
      */
     public void deleteCar(Long id) {
-        if (!carRepository.existsById(id)) {
-            throw new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS);
-        }
-        carRepository.deleteById(id);
+        User loggedUser = tokenService.getLoggedUser();
+        Car car = carRepository.findByIdAndUser_Login(id, loggedUser.getLogin())
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS));
+        carRepository.delete(car);
     }
 
     /**
-     * Uploads a photo for the car.
+     * Uploads a photo for a specific car.
      *
      * @param carId the car ID
      * @param file  the photo file
@@ -133,7 +147,7 @@ public class CarServiceImpl implements CarServiceInterface {
             Path path = Paths.get("uploads", "cars", String.valueOf(carId), file.getOriginalFilename());
             Files.createDirectories(path.getParent());
             Files.write(path, bytes);
-            car.setPhotoUrl(path.toString());
+            car.setPhotoCarUrl(path.toString());
             carRepository.save(car);
         } catch (IOException e) {
             throw new InvalidFieldsException(ErrorMessages.INVALID_PHOTO);
@@ -147,25 +161,13 @@ public class CarServiceImpl implements CarServiceInterface {
      * @throws MissingFieldsException if any required fields are missing
      */
     private void validateCars(CarDto carDto) {
-        if (carDto.getLicensePlate().isBlank() ||
-            carDto.getModel().isBlank() ||
-            carDto.getColor().isBlank() ||
-            carDto.getYear() == null
+        if (carDto.licensePlate().isBlank() ||
+            carDto.model().isBlank() ||
+            carDto.color().isBlank() ||
+            carDto.year() == null
         ) {
             throw new MissingFieldsException(ErrorMessages.MISSING_FIELDS);
         }
-    }
-
-    /**
-     * Retrieves a car by license plate.
-     *
-     * @param licensePlate the car license plate
-     * @return an optional car
-     * @throws ResourceNotFoundException if the car is not found
-     */
-    private Optional<Car> getCarByLicensePlate(String licensePlate) {
-        return Optional.ofNullable(carRepository.findByLicensePlate(licensePlate)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.INVALID_FIELDS)));
     }
 
     /**
@@ -178,4 +180,3 @@ public class CarServiceImpl implements CarServiceInterface {
         carUsageCount.put(car.getId(), carUsageCount.getOrDefault(car.getId(), 0) + 1);
     }
 }
-
