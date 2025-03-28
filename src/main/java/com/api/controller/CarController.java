@@ -6,6 +6,7 @@ import com.api.exception.InvalidFieldsException;
 import com.api.exception.ResourceNotFoundException;
 import com.api.interfaces.CarServiceInterface;
 import com.api.util.openapi.CarControllerOpenApi;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(value = "/api/cars")
+@SecurityRequirement(name = "bearerAuth")
 public class CarController implements CarControllerOpenApi {
     /**
      * Logger for this class
